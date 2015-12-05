@@ -1,0 +1,57 @@
+spring:
+  profiles.active: development
+  jackson.serialization.indent_output: true
+
+logging.level.org.ceva24: TRACE
+
+security.basic.realm: Symphonia
+
+---
+
+spring:
+  profiles: development
+  datasource.url: jdbc:h2:mem:testdb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS SYMPHONIA
+  jpa:
+    hibernate.ddl-auto: create-drop
+    properties.hibernate.default_schema: symphonia
+    show-sql: true
+
+security.user:
+  name: user
+  password: pass
+
+org.ceva24.symphonia.quote.wait-period.hours: 0
+
+---
+
+spring:
+  profiles: test
+  profiles.includes: development
+  datasource.initialize: false
+
+---
+
+spring:
+  profiles: production
+  datasource:
+    url: localhost
+    initialize: false
+    validation-query: SELECT 1 FROM DUAL
+    initial-size: 1
+    max-active: 1
+    max-idle: 1
+    min-idle: 1
+    max-wait: 10000
+    test-on-borrow: true
+    test-on-connect: true
+    test-on-return: true
+    test-while-idle: true
+    time-between-eviction-runs-millis: 300000
+    min-evictable-idle-time-millis: 300000
+  jpa:
+    hibernate.ddl-auto: validate
+    properties.hibernate.default_schema: symphonia
+
+security.require-ssl: true
+
+org.ceva24.symphonia.quote.wait-period.hours: 12
