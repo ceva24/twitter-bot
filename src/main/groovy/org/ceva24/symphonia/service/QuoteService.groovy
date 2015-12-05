@@ -10,8 +10,6 @@ class QuoteService {
 
     def getNextQuote() {
 
-        log.info 'getting next quote'
-
         throw new WaitPeriodException(2)
     }
 }

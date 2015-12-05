@@ -26,8 +26,6 @@ class QuoteController {
     @RequestMapping(value = '/', method = RequestMethod.GET)
     def tweetQuote() {
 
-        log.info 'received request'
-
         quoteService.nextQuote
 
         return [code: 200, reason: 'OK']
@@ -39,8 +37,6 @@ class QuoteController {
         // TODO message source
         def message = "Cannot tweet quote before minimum wait period of ${waitPeriod} hours has elapsed (time remaining = ${e.hoursRemaining} hours)"
 
-        log.error message, e
-
-        response.sendError(HttpStatus.BAD_REQUEST.value(), message)
+        response.sendError HttpStatus.BAD_REQUEST.value(), message
     }
 }

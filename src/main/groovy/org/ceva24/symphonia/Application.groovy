@@ -12,8 +12,6 @@ import org.springframework.web.context.request.RequestAttributes
 @SpringBootApplication
 class Application extends SpringBootServletInitializer {
 
-    // TODO codenarc
-
     static def main(def args) {
 
         SpringApplication.run Application, args as String[]
