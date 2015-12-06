@@ -38,7 +38,6 @@ spring:
 spring:
   profiles: production
   datasource:
-    url: jdbc:mysql://localhost:3306
     initialize: false
     validation-query: SELECT 1 FROM DUAL
     initial-size: 1
@@ -58,4 +57,4 @@ spring:
 
 security.require-ssl: true
 
-org.ceva24.symphonia.quote.wait-period.seconds: 86340 # just under 24 hours
+org.ceva24.symphonia.quote.wait-period.seconds: 84600 # 23.5 hours
