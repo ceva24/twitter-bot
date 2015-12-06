@@ -1,6 +1,5 @@
 spring:
   profiles.active: development
-  jackson.serialization.indent_output: true
 
 logging.level.org.ceva24: TRACE
 
