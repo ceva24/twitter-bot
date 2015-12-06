@@ -1,11 +1,9 @@
 package org.ceva24.symphonia.service
 
-import groovy.util.logging.Slf4j
 import org.ceva24.symphonia.repository.QuoteRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
-@Slf4j
 @Service
 class SymphoniaService {
 
@@ -22,6 +20,8 @@ class SymphoniaService {
         // if in wait period throw exception
 
         def quote = quoteRepository.findNextQuote()
+
+        // TODO how to handle empty database
 
         // update quote isTweeted value here - if an exception occurs now or later we can rollback
 
