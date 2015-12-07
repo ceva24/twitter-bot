@@ -17,13 +17,13 @@ class SymphoniaService {
 
     def tweetNextQuote() {
 
-        // if in wait period throw exception
+        // TODO if in wait period throw exception
 
         def quote = quoteRepository.findNextQuote()
 
         // TODO how to handle empty database
 
-        // update quote isTweeted value here - if an exception occurs now or later we can rollback
+        // TODO update quote isTweeted value here - if an exception occurs now or later we can rollback
 
         def tweet = tweetService.sendTweet quote.text
 

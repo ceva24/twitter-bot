@@ -8,6 +8,8 @@ import org.springframework.boot.context.web.SpringBootServletInitializer
 @SpringBootApplication
 class Application extends SpringBootServletInitializer {
 
+    // TODO tests
+
     static def main(def args) {
 
         SpringApplication.run Application, args as String[]
