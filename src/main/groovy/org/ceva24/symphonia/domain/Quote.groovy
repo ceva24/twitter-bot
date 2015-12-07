@@ -11,5 +11,5 @@ class Quote {
 
     String text
     Integer sequenceNo
-    Boolean isTweeted
+    Date tweetedOn
 }

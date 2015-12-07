@@ -13,13 +13,14 @@ spring:
     hibernate.ddl-auto: create-drop
     properties.hibernate.default_schema: symphonia
     show-sql: true
+  h2.console.enabled: true
 
 security.user:
   name: user
   password: pass
 
 org.ceva24.symphonia:
-  quote.quiet-period.seconds: 10
+  quote.quiet-period.seconds: 84600
   twitter:
     consumer-key:
     consumer-secret:

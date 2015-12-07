@@ -1,11 +1,17 @@
 package org.ceva24.symphonia.service
 
+import org.ceva24.symphonia.exception.QuietPeriodException
 import org.ceva24.symphonia.repository.QuoteRepository
+import org.joda.time.Period
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class SymphoniaService {
+
+    @Value('${org.ceva24.symphonia.quote.quiet-period.seconds}')
+    Long quietPeriod
 
     // TODO if no more quotes then reset all, send ending tweet and enter downtime mode
 
@@ -17,7 +23,7 @@ class SymphoniaService {
 
     def tweetNextQuote() {
 
-        // TODO if in wait period throw exception
+        checkQuietPeriod()
 
         def quote = quoteRepository.findNextQuote()
 
@@ -28,6 +34,24 @@ class SymphoniaService {
         def tweet = tweetService.sendTweet quote.text
 
         return new TweetQuoteResult(timestamp: tweet.createdAt, id: tweet.id, text: tweet.text)
+    }
+
+    protected def checkQuietPeriod() {
+
+        def lastTweetTime = quoteRepository.findLatestQuote()?.tweetedOn?.time
+
+        if (!lastTweetTime) return
+
+        def now = new Date().time
+
+        def secondsPassedSinceLastTweet = new Period(lastTweetTime, now).toStandardSeconds().seconds
+
+        if (secondsPassedSinceLastTweet < quietPeriod) {
+
+            def timeRemainingMillis = (quietPeriod - secondsPassedSinceLastTweet) * 1000
+
+            throw new QuietPeriodException(new Period(now, now + timeRemainingMillis))
+        }
     }
 
     static class TweetQuoteResult {
