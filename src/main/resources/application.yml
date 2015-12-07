@@ -19,7 +19,7 @@ security.user:
   password: pass
 
 org.ceva24.symphonia:
-  quote.wait-period.seconds: 10
+  quote.quiet-period.seconds: 10
   twitter:
     consumer-key:
     consumer-secret:
@@ -57,4 +57,4 @@ spring:
 
 security.require-ssl: true
 
-org.ceva24.symphonia.quote.wait-period.seconds: 84600 # 23.5 hours
+org.ceva24.symphonia.quote.quiet-period.seconds: 84600 # 23.5 hours
