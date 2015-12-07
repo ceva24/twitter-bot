@@ -2,12 +2,12 @@ package org.ceva24.symphonia.exception
 
 class WaitPeriodException extends RuntimeException {
 
-    Integer hoursRemaining
+    Integer secondsRemaining
 
-    WaitPeriodException(Integer hoursRemaining) {
+    WaitPeriodException(Integer secondsRemaining) {
 
         super('Cannot tweet during wait period')
 
-        this.hoursRemaining = hoursRemaining
+        this.secondsRemaining = secondsRemaining
     }
 }
