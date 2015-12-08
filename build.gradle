@@ -12,10 +12,13 @@ apply plugin: 'spring-boot'
 apply plugin: 'war'
 apply plugin: 'codenarc'
 
+processResources {
+    expand project.properties
+}
+
 war {
-    archiveName = 'symphonia.war'
-    version =  '0.1.0'
     baseName = 'symphonia'
+    version =  '0.1.0'
     rootSpec.exclude 'data.sql'
 }
 
@@ -42,6 +45,7 @@ dependencies {
     compile 'org.codehaus.groovy:groovy-all'
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compile 'org.springframework.boot:spring-boot-starter-actuator'
     compile 'org.springframework.boot:spring-boot-starter-security'
     compile 'org.springframework.boot:spring-boot-starter-social-twitter'
     compile 'joda-time:joda-time:2.9'

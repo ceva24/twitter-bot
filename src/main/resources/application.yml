@@ -1,5 +1,9 @@
 spring.profiles.active: development
 
+info.build:
+  name: ${war.baseName}
+  version: ${war.version}
+
 logging.level.org.ceva24: TRACE
 
 security.basic.realm: Symphonia
@@ -20,7 +24,7 @@ security.user:
   password: pass
 
 org.ceva24.symphonia:
-  quote.quiet-period.seconds: 84600
+  quote.quiet-period.seconds: 20
   twitter:
     consumer-key:
     consumer-secret:
