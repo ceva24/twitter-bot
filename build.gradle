@@ -17,7 +17,7 @@ processResources {
 }
 
 war {
-    baseName = 'symphonia'
+    baseName = 'twitterbot'
     version =  '0.1.0'
     rootSpec.exclude 'data.sql'
 }

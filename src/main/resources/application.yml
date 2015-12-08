@@ -6,16 +6,15 @@ info.build:
 
 logging.level.org.ceva24: TRACE
 
-security.basic.realm: Symphonia
+security.basic.realm: Twitter Bot
 
 ---
 
 spring:
   profiles: development
-  datasource.url: jdbc:h2:mem:testdb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS SYMPHONIA
+  datasource.url: jdbc:h2:mem:testdb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
   jpa:
     hibernate.ddl-auto: create-drop
-    properties.hibernate.default_schema: symphonia
     show-sql: true
   h2.console.enabled: true
 
@@ -23,8 +22,8 @@ security.user:
   name: user
   password: pass
 
-org.ceva24.symphonia:
-  quote.quiet-period.seconds: 20
+org.ceva24.twitter-bot:
+  tweet.quiet-period.seconds: 20
   twitter:
     consumer-key:
     consumer-secret:
@@ -44,7 +43,6 @@ spring:
   profiles: production
   datasource:
     initialize: false
-    validation-query: SELECT 1 FROM DUAL
     initial-size: 1
     max-active: 1
     max-idle: 1
@@ -56,10 +54,7 @@ spring:
     test-while-idle: true
     time-between-eviction-runs-millis: 300000
     min-evictable-idle-time-millis: 300000
-  jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
-    properties.hibernate.default_schema: symphonia
 
 security.require-ssl: true
 
-org.ceva24.symphonia.quote.quiet-period.seconds: 84600 # 23.5 hours
+org.ceva24.twitter-bot.tweet.quiet-period.seconds: 84600 # 23.5 hours

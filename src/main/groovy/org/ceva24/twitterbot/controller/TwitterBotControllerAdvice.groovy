@@ -1,6 +1,6 @@
-package org.ceva24.symphonia.controller
+package org.ceva24.twitterbot.controller
 
-import org.ceva24.symphonia.exception.QuietPeriodException
+import org.ceva24.twitterbot.exception.QuietPeriodException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import org.springframework.http.HttpStatus
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import javax.servlet.http.HttpServletResponse
 
 @ControllerAdvice
-class SymphoniaControllerAdvice {
+class TwitterBotControllerAdvice {
 
     @Autowired
     MessageSource messageSource
@@ -20,7 +20,7 @@ class SymphoniaControllerAdvice {
     def inQuietPeriod(HttpServletResponse response, QuietPeriodException e) {
 
         def params = [e.timeRemaining.hours, e.timeRemaining.minutes, e.timeRemaining.seconds] as Object[]
-        def message = messageSource.getMessage 'org.ceva24.symphonia.in-quiet-period', params, Locale.default
+        def message = messageSource.getMessage 'org.ceva24.twitter-bot.in-quiet-period', params, Locale.default
 
         response.sendError HttpStatus.BAD_REQUEST.value(), message
     }

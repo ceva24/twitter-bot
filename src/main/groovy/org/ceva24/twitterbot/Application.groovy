@@ -1,4 +1,4 @@
-package org.ceva24.symphonia
+package org.ceva24.twitterbot
 
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication

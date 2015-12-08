@@ -1,4 +1,4 @@
-package org.ceva24.symphonia.exception
+package org.ceva24.twitterbot.exception
 
 import org.joda.time.Period
 

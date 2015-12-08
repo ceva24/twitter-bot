@@ -1,10 +1,10 @@
-package org.ceva24.symphonia.domain
+package org.ceva24.twitterbot.domain
 
 import javax.persistence.Entity
 import javax.persistence.Id
 
 @Entity
-class Quote {
+class Status {
 
     @Id
     Long id

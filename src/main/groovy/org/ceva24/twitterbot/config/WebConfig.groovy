@@ -1,4 +1,4 @@
-package org.ceva24.symphonia.config
+package org.ceva24.twitterbot.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
