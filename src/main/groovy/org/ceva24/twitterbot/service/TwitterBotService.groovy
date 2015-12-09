@@ -34,7 +34,6 @@ class TwitterBotService {
 
     protected def updateStatusTweetedOn(Status status) {
 
-        status.tweetedOn = new Date()
-        statusRepository.save status
+        statusRepository.save new Date(), status.id
     }
 }
