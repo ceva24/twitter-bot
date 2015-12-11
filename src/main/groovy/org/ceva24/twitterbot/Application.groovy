@@ -8,7 +8,7 @@ import org.springframework.boot.context.web.SpringBootServletInitializer
 @SpringBootApplication
 class Application extends SpringBootServletInitializer {
 
-    // TODO tests - test can tweet straight after duplicate error
+    // TODO unit tests (test can tweet straight after duplicate error)
 
     static def main(def args) {
 
