@@ -31,17 +31,6 @@ class QuietPeriodService {
         checkQuietPeriod()
     }
 
-    protected def checkDowntimePeriod() {
-
-        def start = configRepository.findOne(Config.ConfigKey.DOWNTIME)?.activeOn
-        if (!start) return
-
-        def periodCalculator = new PeriodCalculator(start, downtimePeriodLength)
-
-        if (periodCalculator.isPeriodActive())
-            throw new DowntimePeriodException(periodCalculator.durationUntilEnd.toPeriod())
-    }
-
     protected def checkQuietPeriod() {
 
         def start = twitterStatusRepository.findLastStatus()?.tweetedOn
@@ -51,5 +40,16 @@ class QuietPeriodService {
 
         if (periodCalculator.isPeriodActive())
             throw new QuietPeriodException(periodCalculator.durationUntilEnd.toPeriod())
+    }
+
+    protected def checkDowntimePeriod() {
+
+        def start = configRepository.findOne(Config.ConfigKey.DOWNTIME)?.activeOn
+        if (!start) return
+
+        def periodCalculator = new PeriodCalculator(start, downtimePeriodLength)
+
+        if (periodCalculator.isPeriodActive())
+            throw new DowntimePeriodException(periodCalculator.durationUntilEnd.toPeriod())
     }
 }

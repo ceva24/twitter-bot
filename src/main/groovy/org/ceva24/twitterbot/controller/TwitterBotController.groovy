@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController
 class TwitterBotController {
 
     @Autowired
-    TwitterBotService twitterBotService
+    QuietPeriodService quietPeriodService
 
     @Autowired
-    QuietPeriodService quietPeriodService
+    TwitterBotService twitterBotService
 
     @RequestMapping(value = '/', method = RequestMethod.GET)
     def tweet() {
