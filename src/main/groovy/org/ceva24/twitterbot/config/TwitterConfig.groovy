@@ -1,8 +1,9 @@
 package org.ceva24.twitterbot.config
 
 import groovy.util.logging.Slf4j
-import org.ceva24.twitterbot.domain.Status
-import org.ceva24.twitterbot.service.TwitterService
+import org.ceva24.twitterbot.domain.TwitterStatus
+import org.ceva24.twitterbot.service.TweetService
+import org.joda.time.DateTime
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -28,25 +29,25 @@ class TwitterConfig {
 
     @Profile('development')
     @Bean
-    TwitterService twitterService() {
+    TweetService twitterService() {
 
-        return new DevTwitterService()
+        return new DevTweetService()
     }
 
     @Slf4j
-    private static class DevTwitterService extends TwitterService {
+    private static class DevTweetService extends TweetService {
 
         String lastStatusText
 
-        def sendTweet(Status status) {
+        def sendTweet(TwitterStatus status) {
 
             if (status.text == lastStatusText) throw new DuplicateStatusException('twitter', 'Status is a duplicate.')
 
             lastStatusText = status.text
 
-            log.info 'development mode enabled: returning without updating status on twitter'
+            log.info 'development profile: returning without updating status on twitter'
 
-            return new TweetResult(timestamp: new Date(), id: 1L, text: status.text)
+            return new TweetResult(timestamp: new DateTime(), id: 1L, text: status.text)
         }
     }
 }

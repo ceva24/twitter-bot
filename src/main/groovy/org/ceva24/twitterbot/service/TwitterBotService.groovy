@@ -1,7 +1,10 @@
 package org.ceva24.twitterbot.service
 
-import org.ceva24.twitterbot.domain.Status
-import org.ceva24.twitterbot.repository.StatusRepository
+import org.ceva24.twitterbot.domain.Config
+import org.ceva24.twitterbot.domain.TwitterStatus
+import org.ceva24.twitterbot.repository.ConfigRepository
+import org.ceva24.twitterbot.repository.TwitterStatusRepository
+import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,30 +13,37 @@ import org.springframework.transaction.annotation.Transactional
 class TwitterBotService {
 
     @Autowired
-    StatusRepository statusRepository
+    TwitterStatusRepository twitterStatusRepository
 
     @Autowired
-    TwitterService twitterService
+    ConfigRepository configRepository
+
+    @Autowired
+    TweetService twitterService
 
     @Transactional
     def tweet() {
 
-        def status = statusRepository.findNextStatus()
+        def status = twitterStatusRepository.findNextStatus()
 
         updateStatusTweetedOn status
 
+        activateDowntimeModeIfComplete()
+
         return twitterService.sendTweet(status)
-
-        // TODO if all statuses tweeted set downtime period active and set all tweetedOn dates to null
     }
 
-    def getLastTweetTime() {
+    protected def updateStatusTweetedOn(TwitterStatus status) {
 
-        return statusRepository.findLastStatus()?.tweetedOn?.time
+        twitterStatusRepository.setTweetedOnFor new DateTime(), status.id
     }
 
-    protected def updateStatusTweetedOn(Status status) {
+    protected def activateDowntimeModeIfComplete() {
 
-        statusRepository.save new Date(), status.id
+        if (twitterStatusRepository.countByTweetedOnIsNull() > 0) return
+
+        twitterStatusRepository.resetAll()
+
+        configRepository.setActiveOnFor(new DateTime(), Config.ConfigKey.DOWNTIME)
     }
 }

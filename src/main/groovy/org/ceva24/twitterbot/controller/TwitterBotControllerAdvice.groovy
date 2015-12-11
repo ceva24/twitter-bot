@@ -1,5 +1,6 @@
 package org.ceva24.twitterbot.controller
 
+import org.ceva24.twitterbot.exception.DowntimePeriodException
 import org.ceva24.twitterbot.exception.QuietPeriodException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
@@ -21,6 +22,15 @@ class TwitterBotControllerAdvice {
 
         def params = [e.timeRemaining.hours, e.timeRemaining.minutes, e.timeRemaining.seconds] as Object[]
         def message = messageSource.getMessage 'org.ceva24.twitter-bot.in-quiet-period', params, Locale.default
+
+        response.sendError HttpStatus.BAD_REQUEST.value(), message
+    }
+
+    @ExceptionHandler(DowntimePeriodException)
+    def inDowntimePeriod(HttpServletResponse response, DowntimePeriodException e) {
+
+        def params = [e.timeRemaining.weeks, e.timeRemaining.days, e.timeRemaining.hours, e.timeRemaining.minutes, e.timeRemaining.seconds] as Object[]
+        def message = messageSource.getMessage 'org.ceva24.twitter-bot.in-downtime-period', params, Locale.default
 
         response.sendError HttpStatus.BAD_REQUEST.value(), message
     }
