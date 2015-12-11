@@ -18,7 +18,7 @@ processResources {
 
 war {
     baseName = 'twitterbot'
-    version =  '0.1.0'
+    version =  '0.9.0'
     rootSpec.exclude 'data.sql'
 }
 
@@ -26,7 +26,7 @@ codenarc {
     toolVersion '0.24.1'
     configFile file('codenarc.groovy')
     maxPriority1Violations = 0
-    maxPriority2Violations = 0
+    maxPriority2Violations = 2
     maxPriority3Violations = 0
 }
 
@@ -48,7 +48,10 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-actuator'
     compile 'org.springframework.boot:spring-boot-starter-security'
     compile 'org.springframework.boot:spring-boot-starter-social-twitter'
+
     compile 'joda-time:joda-time:2.9'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.4'
+    compile 'org.jadira.usertype:usertype.extended:4.0.0.GA'
 
     runtime 'com.h2database:h2'
     runtime 'mysql:mysql-connector-java:5.1.37'
