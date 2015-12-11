@@ -19,7 +19,7 @@ class TwitterBotService {
     ConfigRepository configRepository
 
     @Autowired
-    TweetService twitterService
+    TweetService tweetService
 
     @Transactional
     def tweet() {
@@ -30,7 +30,7 @@ class TwitterBotService {
 
         activateDowntimeModeIfComplete()
 
-        return twitterService.sendTweet(status)
+        return tweetService.sendTweet(status)
     }
 
     protected def updateStatusTweetedOn(TwitterStatus status) {

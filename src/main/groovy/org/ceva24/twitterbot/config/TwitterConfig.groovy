@@ -29,7 +29,7 @@ class TwitterConfig {
 
     @Profile('development')
     @Bean
-    TweetService twitterService() {
+    TweetService tweetService() {
 
         return new DevTweetService()
     }
