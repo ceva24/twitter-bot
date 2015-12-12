@@ -47,7 +47,7 @@ class TwitterConfig {
 
             log.info 'development profile: returning without updating status on twitter'
 
-            return new TweetResult(timestamp: new DateTime(), id: 1L, text: status.text)
+            return new TweetResult(timestamp: new DateTime(), id: 1, text: status.text)
         }
     }
 }
