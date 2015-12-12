@@ -37,7 +37,7 @@ org.ceva24.twitter-bot:
 
 spring:
   profiles: test
-  profiles.includes: development
+  profiles.include: development
   datasource.initialize: false
 
 ---
