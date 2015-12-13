@@ -1,7 +1,6 @@
 package org.ceva24.twitterbot.config
 
 import groovy.util.logging.Slf4j
-import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.service.TweetService
 import org.joda.time.DateTime
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -39,15 +38,15 @@ class TwitterConfig {
 
         String lastStatusText
 
-        def sendTweet(TwitterStatus status) {
+        def sendTweet(String text) {
 
-            if (status.text == lastStatusText) throw new DuplicateStatusException('twitter', 'Status is a duplicate.')
+            if (text == lastStatusText) throw new DuplicateStatusException('twitter', 'Status is a duplicate.')
 
-            lastStatusText = status.text
+            lastStatusText = text
 
             log.info 'development profile: returning without updating status on twitter'
 
-            return new TweetResult(timestamp: new DateTime(), id: 1, text: status.text)
+            return new TweetResult(timestamp: new DateTime(), id: 1, text: text)
         }
     }
 }

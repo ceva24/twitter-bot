@@ -1,6 +1,5 @@
 package org.ceva24.twitterbot.service
 
-import org.ceva24.twitterbot.domain.TwitterStatus
 import org.joda.time.DateTime
 import org.springframework.social.DuplicateStatusException
 import org.springframework.social.twitter.api.TimelineOperations
@@ -24,7 +23,7 @@ class TweetServiceSpec extends Specification {
         tweetService.twitter.timelineOperations().updateStatus(_) >> new Tweet(1, 'test', now, null, null, null, 1, null, null)
 
         when:
-        def result = tweetService.sendTweet new TwitterStatus(text: 'test')
+        def result = tweetService.sendTweet 'test'
 
         then:
         result.id == 1L
@@ -40,7 +39,7 @@ class TweetServiceSpec extends Specification {
         tweetService.twitter.timelineOperations().updateStatus(_) >> { throw exception }
 
         when:
-        tweetService.sendTweet new TwitterStatus(text: 'test')
+        tweetService.sendTweet 'test'
 
         then:
         def e = thrown(Exception)

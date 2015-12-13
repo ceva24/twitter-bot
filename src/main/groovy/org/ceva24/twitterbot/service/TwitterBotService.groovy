@@ -30,7 +30,7 @@ class TwitterBotService {
 
         activateDowntimeModeIfComplete()
 
-        return tweetService.sendTweet(status)
+        return tweetService.sendTweet(status.text)
     }
 
     protected def updateStatusTweetedOn(TwitterStatus status) {
@@ -44,6 +44,6 @@ class TwitterBotService {
 
         twitterStatusRepository.resetAll()
 
-        configRepository.setActiveOnFor(new DateTime(), Config.ConfigKey.DOWNTIME)
+        configRepository.setActiveOnFor new DateTime(), Config.ConfigKey.DOWNTIME
     }
 }

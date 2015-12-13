@@ -29,9 +29,9 @@ class TwitterBotServiceSpec extends Specification {
         twitterBotService.tweet()
 
         then:
-        1 * twitterBotService.twitterStatusRepository.findNextStatus() >> new TwitterStatus(id: 5)
+        1 * twitterBotService.twitterStatusRepository.findNextStatus() >> new TwitterStatus(id: 5, text: 'test')
         1 * twitterBotService.twitterStatusRepository.setTweetedOnFor(new DateTime(100000), 5)
-        1 * twitterBotService.tweetService.sendTweet({ it.id == 5 })
+        1 * twitterBotService.tweetService.sendTweet('test')
     }
 
     def 'the downtime period is not activated when there are statuses to be sent after the current one'() {
