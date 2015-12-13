@@ -23,7 +23,7 @@ class TwitterBotServiceSpec extends Specification {
     def 'sending a tweet updates the status in the database and sends the tweet'() {
 
         setup:
-        DateTimeUtils.setCurrentMillisFixed 100000
+        DateTimeUtils.currentMillisFixed = 100000
 
         when:
         twitterBotService.tweet()
@@ -48,7 +48,7 @@ class TwitterBotServiceSpec extends Specification {
     def 'the downtime period is activated when tweeting the last status update'() {
 
         setup:
-        DateTimeUtils.setCurrentMillisFixed 100000
+        DateTimeUtils.currentMillisFixed = 100000
 
         when:
         twitterBotService.tweet()

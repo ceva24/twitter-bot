@@ -24,7 +24,7 @@ class QuietPeriodServiceSpec extends Specification {
         setup:
         quietPeriodService.quietPeriodLength = 60
 
-        DateTimeUtils.setCurrentMillisFixed 161000
+        DateTimeUtils.currentMillisFixed = 161000
         quietPeriodService.twitterStatusRepository.findLastStatus() >> new TwitterStatus(tweetedOn: new DateTime(100000))
 
         when:
@@ -39,7 +39,7 @@ class QuietPeriodServiceSpec extends Specification {
         setup:
         quietPeriodService.quietPeriodLength = 60
 
-        DateTimeUtils.setCurrentMillisFixed 159000
+        DateTimeUtils.currentMillisFixed = 159000
         quietPeriodService.twitterStatusRepository.findLastStatus() >> new TwitterStatus(tweetedOn: new DateTime(100000))
 
         when:
@@ -53,7 +53,7 @@ class QuietPeriodServiceSpec extends Specification {
 
         setup:
         quietPeriodService.quietPeriodLength = 60
-        DateTimeUtils.setCurrentMillisFixed 100000
+        DateTimeUtils.currentMillisFixed = 100000
 
         when:
         quietPeriodService.checkCanTweet()
@@ -67,7 +67,7 @@ class QuietPeriodServiceSpec extends Specification {
         setup:
         quietPeriodService.downtimePeriodLength = 60
 
-        DateTimeUtils.setCurrentMillisFixed 161000
+        DateTimeUtils.currentMillisFixed = 161000
         quietPeriodService.configRepository.findOne(Config.ConfigKey.DOWNTIME) >> new Config(activeOn: new DateTime(100000))
 
         when:
@@ -82,7 +82,7 @@ class QuietPeriodServiceSpec extends Specification {
         setup:
         quietPeriodService.downtimePeriodLength = 60
 
-        DateTimeUtils.setCurrentMillisFixed 159000
+        DateTimeUtils.currentMillisFixed = 159000
         quietPeriodService.configRepository.findOne(Config.ConfigKey.DOWNTIME) >> new Config(activeOn: new DateTime(100000))
 
         when:
@@ -97,7 +97,7 @@ class QuietPeriodServiceSpec extends Specification {
         setup:
         quietPeriodService.downtimePeriodLength = 60
 
-        DateTimeUtils.setCurrentMillisFixed 100000
+        DateTimeUtils.currentMillisFixed = 100000
 
         when:
         quietPeriodService.checkCanTweet()
