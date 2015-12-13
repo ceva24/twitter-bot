@@ -16,8 +16,12 @@ ruleset {
         DuplicateNumberLiteral(doNotApplyToFilesMatching: SPEC_PATTERN)
         DuplicateStringLiteral(doNotApplyToFilesMatching: SPEC_PATTERN)
     }
-    ruleset 'rulesets/exceptions.xml'
-    ruleset 'rulesets/groovyism.xml'
+    ruleset('rulesets/exceptions.xml') {
+        ThrowRuntimeException(doNotApplyToFilesMatching: SPEC_PATTERN)
+    }
+    ruleset('rulesets/groovyism.xml') {
+        ClosureAsLastMethodParameter(doNotApplyToFilesMatching: SPEC_PATTERN)
+    }
     ruleset 'rulesets/imports.xml'
     ruleset 'rulesets/jdbc.xml'
     ruleset 'rulesets/junit.xml'
