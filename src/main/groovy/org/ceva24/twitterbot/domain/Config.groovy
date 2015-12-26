@@ -12,9 +12,9 @@ class Config {
 
     @Id
     @Enumerated(EnumType.STRING)
-    ConfigKey id
+    ConfigId id
 
     DateTime activeOn
 
-    static enum ConfigKey { DOWNTIME }
+    static enum ConfigId { DOWNTIME }
 }

@@ -44,7 +44,7 @@ class QuietPeriodService {
 
     protected def checkDowntimePeriod() {
 
-        def start = configRepository.findOne(Config.ConfigKey.DOWNTIME)?.activeOn
+        def start = configRepository.findOne(Config.ConfigId.DOWNTIME)?.activeOn
         if (!start) return
 
         def periodCalculator = new PeriodCalculator(start, downtimePeriodLength)

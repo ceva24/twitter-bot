@@ -46,13 +46,13 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     String password
 
     @Autowired
+    TwitterBotService twitterBotService
+
+    @Autowired
     TestTwitterStatusRepository testTwitterStatusRepository
 
     @Autowired
     TestConfigRepository testConfigRepository
-
-    @Autowired
-    TwitterBotService twitterBotService
 
     RestTemplate restTemplate
 
@@ -64,12 +64,15 @@ class TwitterBotControllerIntegrationSpec extends Specification {
 
         authenticationHeader = new HttpHeaders()
         authenticationHeader.add 'Authorization', "Basic ${new String(Base64.encodeBase64("${username}:${password}".bytes))}"
-
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test', sequenceNo: 1, tweetedOn: null)
-        testConfigRepository.save new Config(id: Config.ConfigKey.DOWNTIME, activeOn: null)
     }
 
-    def 'an unauthenticated request return http unauthorized'() {
+    def cleanup() {
+
+        testTwitterStatusRepository.deleteAll()
+        testConfigRepository.deleteAll()
+    }
+
+    def 'an unauthenticated request returns http unauthorized'() {
 
         when:
         def response = restTemplate.getForEntity "http://localhost:${port}/", Map
@@ -97,6 +100,9 @@ class TwitterBotControllerIntegrationSpec extends Specification {
 
         setup:
         DateTimeUtils.currentMillisFixed = 100000
+
+        and:
+        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test', sequenceNo: 1)
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -132,7 +138,7 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     def 'an authenticated request to send a tweet during the downtime period returns http bad request'() {
 
         setup:
-        testConfigRepository.save new Config(id: Config.ConfigKey.DOWNTIME, activeOn: DateTime.now())
+        testConfigRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now())
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -150,6 +156,9 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     def 'an authenticated request to send a duplicate tweet returns http bad request'() {
 
         setup:
+        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test', sequenceNo: 1)
+
+        and:
         twitterBotService.tweetService = Mock(TweetService) { sendTweet(_) >> { throw new DuplicateStatusException('twitter', 'duplicate status error') } }
 
         when:

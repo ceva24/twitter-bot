@@ -20,6 +20,8 @@ class TweetServiceSpec extends Specification {
 
         setup:
         def now = new Date()
+
+        and:
         tweetService.twitter.timelineOperations().updateStatus(_) >> new Tweet(1, 'test', now, null, null, null, 1, null, null)
 
         when:
@@ -36,6 +38,7 @@ class TweetServiceSpec extends Specification {
         setup:
         def exception = new DuplicateStatusException('twitter', 'Status is a duplicate')
 
+        and:
         tweetService.twitter.timelineOperations().updateStatus(_) >> { throw exception }
 
         when:

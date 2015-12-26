@@ -22,9 +22,10 @@ class QuietPeriodServiceSpec extends Specification {
     def 'no quiet period exception is thrown when the quiet period is not active'() {
 
         setup:
-        quietPeriodService.quietPeriodLength = 60
-
         DateTimeUtils.currentMillisFixed = 161000
+
+        and:
+        quietPeriodService.quietPeriodLength = 60
         quietPeriodService.twitterStatusRepository.findLastStatus() >> new TwitterStatus(tweetedOn: new DateTime(100000))
 
         when:
@@ -37,9 +38,10 @@ class QuietPeriodServiceSpec extends Specification {
     def 'a quiet period exception is thrown when the quiet period is active'() {
 
         setup:
-        quietPeriodService.quietPeriodLength = 60
-
         DateTimeUtils.currentMillisFixed = 159000
+
+        and:
+        quietPeriodService.quietPeriodLength = 60
         quietPeriodService.twitterStatusRepository.findLastStatus() >> new TwitterStatus(tweetedOn: new DateTime(100000))
 
         when:
@@ -52,8 +54,10 @@ class QuietPeriodServiceSpec extends Specification {
     def 'no quiet period exception is thrown when the start is null'() {
 
         setup:
-        quietPeriodService.quietPeriodLength = 60
         DateTimeUtils.currentMillisFixed = 100000
+
+        and:
+        quietPeriodService.quietPeriodLength = 60
 
         when:
         quietPeriodService.checkCanTweet()
@@ -65,10 +69,11 @@ class QuietPeriodServiceSpec extends Specification {
     def 'no downtime period exception is thrown when the downtime period is not active'() {
 
         setup:
-        quietPeriodService.downtimePeriodLength = 60
-
         DateTimeUtils.currentMillisFixed = 161000
-        quietPeriodService.configRepository.findOne(Config.ConfigKey.DOWNTIME) >> new Config(activeOn: new DateTime(100000))
+
+        and:
+        quietPeriodService.downtimePeriodLength = 60
+        quietPeriodService.configRepository.findOne(Config.ConfigId.DOWNTIME) >> new Config(activeOn: new DateTime(100000))
 
         when:
         quietPeriodService.checkCanTweet()
@@ -80,10 +85,11 @@ class QuietPeriodServiceSpec extends Specification {
     def 'a downtime period exception is thrown when the downtime period is active'() {
 
         setup:
-        quietPeriodService.downtimePeriodLength = 60
-
         DateTimeUtils.currentMillisFixed = 159000
-        quietPeriodService.configRepository.findOne(Config.ConfigKey.DOWNTIME) >> new Config(activeOn: new DateTime(100000))
+
+        and:
+        quietPeriodService.downtimePeriodLength = 60
+        quietPeriodService.configRepository.findOne(Config.ConfigId.DOWNTIME) >> new Config(activeOn: new DateTime(100000))
 
         when:
         quietPeriodService.checkCanTweet()
@@ -95,9 +101,10 @@ class QuietPeriodServiceSpec extends Specification {
     def 'no downtime period exception is thrown when the activeOn date is null'() {
 
         setup:
-        quietPeriodService.downtimePeriodLength = 60
-
         DateTimeUtils.currentMillisFixed = 100000
+
+        and:
+        quietPeriodService.downtimePeriodLength = 60
 
         when:
         quietPeriodService.checkCanTweet()

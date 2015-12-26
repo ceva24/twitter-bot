@@ -44,6 +44,6 @@ class TwitterBotService {
 
         twitterStatusRepository.resetAll()
 
-        configRepository.setActiveOnFor new DateTime(), Config.ConfigKey.DOWNTIME
+        configRepository.setActiveOnFor new DateTime(), Config.ConfigId.DOWNTIME
     }
 }

@@ -56,7 +56,7 @@ class TwitterBotServiceSpec extends Specification {
         then:
         1 * twitterBotService.twitterStatusRepository.countByTweetedOnIsNull() >> 0
         1 * twitterBotService.twitterStatusRepository.resetAll()
-        1 * twitterBotService.configRepository.setActiveOnFor(new DateTime(100000), Config.ConfigKey.DOWNTIME)
+        1 * twitterBotService.configRepository.setActiveOnFor(new DateTime(100000), Config.ConfigId.DOWNTIME)
     }
 
     def 'an exception is thrown if the next status is not found'() {

@@ -13,6 +13,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 161000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(100000), 60)
 
         expect:
@@ -24,6 +25,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 159000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(100000), 60)
 
         expect:
@@ -35,6 +37,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 140000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(100000), 60)
 
         expect:
@@ -46,6 +49,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 100000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(100000), 60)
 
         expect:
@@ -57,6 +61,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 90000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(100000), 60)
 
         when:
@@ -71,6 +76,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 100000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(50000), 60)
 
         expect:
@@ -82,6 +88,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 100000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(39000), 60)
 
         expect:
@@ -93,6 +100,7 @@ class PeriodCalculatorSpec extends Specification {
         setup:
         DateTimeUtils.currentMillisFixed = 100000
 
+        and:
         periodCalculator = new PeriodCalculator(new DateTime(40000), 60)
 
         expect:

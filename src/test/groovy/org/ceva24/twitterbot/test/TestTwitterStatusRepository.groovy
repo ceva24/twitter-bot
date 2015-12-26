@@ -8,4 +8,6 @@ interface TestTwitterStatusRepository extends Repository<TwitterStatus, Long> {
     TwitterStatus findOne(Long id)
 
     void save(TwitterStatus twitterStatus)
+
+    void deleteAll()
 }

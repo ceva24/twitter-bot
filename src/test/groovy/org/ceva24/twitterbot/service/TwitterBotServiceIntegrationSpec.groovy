@@ -20,16 +20,16 @@ import spock.lang.Specification
 class TwitterBotServiceIntegrationSpec extends Specification {
 
     @Autowired
-    TestTwitterStatusRepository testTwitterStatusRepository
-
-    @Autowired
-    TestConfigRepository testConfigRepository
-
-    @Autowired
     TwitterBotService twitterBotService
 
     @Autowired
     ConfigRepository configRepository
+
+    @Autowired
+    TestTwitterStatusRepository testTwitterStatusRepository
+
+    @Autowired
+    TestConfigRepository testConfigRepository
 
     def 'an exception thrown when activating the downtime period performs a rollback on twitter status'() {
 
@@ -54,7 +54,7 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         setup:
         testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
-        testConfigRepository.save new Config(id: Config.ConfigKey.DOWNTIME)
+        testConfigRepository.save new Config(id: Config.ConfigId.DOWNTIME)
 
         and:
         twitterBotService.tweetService = Mock(TweetService)
@@ -68,6 +68,6 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         and:
         !testTwitterStatusRepository.findOne(1).tweetedOn
-        !configRepository.findOne(Config.ConfigKey.DOWNTIME).activeOn
+        !configRepository.findOne(Config.ConfigId.DOWNTIME).activeOn
     }
 }
