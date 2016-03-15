@@ -23,7 +23,7 @@ war {
 }
 
 codenarc {
-    toolVersion '0.24.1'
+    toolVersion '0.25.1'
     configFile file('codenarc.groovy')
     maxPriority1Violations = 0
     maxPriority2Violations = 2

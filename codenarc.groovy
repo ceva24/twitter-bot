@@ -9,6 +9,7 @@ ruleset {
     ruleset 'rulesets/concurrency.xml'
     ruleset('rulesets/convention.xml') {
         NoDef(enabled: false)
+        TrailingComma(enabled: false)
     }
     ruleset 'rulesets/design.xml'
     ruleset('rulesets/dry.xml') {
