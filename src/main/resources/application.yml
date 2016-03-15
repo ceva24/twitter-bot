@@ -3,8 +3,8 @@ spring:
   jpa.properties.jadira.usertype.autoRegisterUserTypes: true
 
 info.build:
-  name: ${war.baseName}
-  version: ${war.version}
+  name: ${name}
+  version: ${version}
 
 logging.level.org.ceva24: TRACE
 
