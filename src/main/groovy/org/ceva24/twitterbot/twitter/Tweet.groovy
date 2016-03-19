@@ -7,6 +7,6 @@ import org.joda.time.DateTime
 class Tweet {
 
     Long id
-    DateTime timestamp
+    DateTime tweetedOn
     String text
 }

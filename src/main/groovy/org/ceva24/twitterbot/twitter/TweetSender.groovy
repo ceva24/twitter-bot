@@ -21,7 +21,7 @@ class TweetSender {
     @Autowired
     MessageSource messageSource
 
-    @Scheduled(cron = '0 0 21 * * *')
+    @Scheduled(cron = '0 * * * * *')
     void tweet() {
 
         if (downtimePeriodService.isDowntimePeriod()) {

@@ -4,9 +4,8 @@ import org.apache.tomcat.util.codec.binary.Base64
 import org.ceva24.twitterbot.Application
 import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.test.TestApplication
-import org.ceva24.twitterbot.test.TestConfigRepository
-import org.ceva24.twitterbot.test.TestTwitterStatusRepository
+import org.ceva24.twitterbot.repository.ConfigRepository
+import org.ceva24.twitterbot.repository.TwitterStatusRepository
 import org.ceva24.twitterbot.twitter.TweetSender
 import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
@@ -28,7 +27,7 @@ import spock.lang.Unroll
 
 @ActiveProfiles('test')
 @WebIntegrationTest(randomPort = true)
-@ContextConfiguration(loader = SpringApplicationContextLoader, classes = [Application, TestApplication])
+@ContextConfiguration(loader = SpringApplicationContextLoader, classes = Application)
 class TwitterBotControllerIntegrationSpec extends Specification {
 
     @Value('${local.server.port}')
@@ -47,10 +46,10 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     TweetSender tweetSender
 
     @Autowired
-    TestTwitterStatusRepository testTwitterStatusRepository
+    TwitterStatusRepository twitterStatusRepository
 
     @Autowired
-    TestConfigRepository testConfigRepository
+    ConfigRepository configRepository
 
     RestTemplate restTemplate
     HttpHeaders authenticationHeader
@@ -61,12 +60,14 @@ class TwitterBotControllerIntegrationSpec extends Specification {
 
         authenticationHeader = new HttpHeaders()
         authenticationHeader.add 'Authorization', "Basic ${new String(Base64.encodeBase64("${username}:${password}".bytes))}"
+
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
     }
 
     def cleanup() {
 
-        testTwitterStatusRepository.deleteAll()
-        testConfigRepository.deleteAll()
+        twitterStatusRepository.deleteAll()
+        configRepository.deleteAll()
     }
 
     def 'unauthenticated requests returns http unauthorized'() {
@@ -82,6 +83,9 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     }
 
     def 'the last tweet status is null when no tweets have been sent'() {
+
+        setup:
+        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -99,7 +103,7 @@ class TwitterBotControllerIntegrationSpec extends Specification {
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
+        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
 
         when:
         tweetSender.tweet()
@@ -111,7 +115,7 @@ class TwitterBotControllerIntegrationSpec extends Specification {
         response.statusCode == HttpStatus.OK
 
         and:
-        response.body.status.lastTweet.timestamp == new DateTime(100000, DateTimeZone.UTC).toString()
+        response.body.status.lastTweet.tweetedOn == new DateTime(100000, DateTimeZone.UTC).toString()
         response.body.status.lastTweet.id == 1
         response.body.status.lastTweet.text == 'test 1'
     }
@@ -135,7 +139,7 @@ class TwitterBotControllerIntegrationSpec extends Specification {
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        testConfigRepository.save(new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now()))
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now())
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map

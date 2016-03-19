@@ -4,9 +4,8 @@ import org.ceva24.twitterbot.Application
 import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.repository.ConfigRepository
-import org.ceva24.twitterbot.test.TestApplication
-import org.ceva24.twitterbot.test.TestConfigRepository
-import org.ceva24.twitterbot.test.TestTwitterStatusRepository
+import org.ceva24.twitterbot.repository.TwitterStatusRepository
+import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.IntegrationTest
 import org.springframework.boot.test.SpringApplicationContextLoader
@@ -18,7 +17,7 @@ import spock.lang.Specification
 @ActiveProfiles('test')
 @IntegrationTest
 @Transactional
-@ContextConfiguration(loader = SpringApplicationContextLoader, classes = [Application, TestApplication])
+@ContextConfiguration(loader = SpringApplicationContextLoader, classes = Application)
 class TwitterBotServiceIntegrationSpec extends Specification {
 
     @Autowired
@@ -28,19 +27,16 @@ class TwitterBotServiceIntegrationSpec extends Specification {
     ConfigRepository configRepository
 
     @Autowired
-    TestTwitterStatusRepository testTwitterStatusRepository
-
-    @Autowired
-    TestConfigRepository testConfigRepository
+    TwitterStatusRepository twitterStatusRepository
 
     def 'an exception thrown when activating the downtime period performs a rollback on twitter status'() {
 
         setup:
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
+        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
 
         and:
         twitterBotService.configRepository = Mock ConfigRepository
-        twitterBotService.configRepository.setActiveOnFor(_, _) >> { throw new RuntimeException() }
+        twitterBotService.configRepository.findOne(_) >> { throw new RuntimeException() }
 
         when:
         twitterBotService.tweet()
@@ -49,17 +45,17 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         thrown RuntimeException
 
         and:
-        !testTwitterStatusRepository.findOne(1).tweetedOn
+        !twitterStatusRepository.findOne(1L).tweetedOn
     }
 
     def 'an exception thrown when sending a tweet performs a rollback on twitter status and config'() {
 
         setup:
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
-        testConfigRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
 
         and:
-        twitterBotService.tweetService = Mock(TweetService)
+        twitterBotService.tweetService = Mock TweetService
         twitterBotService.tweetService.sendTweet(_) >> { throw new RuntimeException() }
 
         when:
@@ -69,7 +65,7 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         thrown RuntimeException
 
         and:
-        !testTwitterStatusRepository.findOne(1).tweetedOn
+        !twitterStatusRepository.findOne(1L).tweetedOn
         !configRepository.findOne(Config.ConfigId.DOWNTIME).activeOn
     }
 
@@ -80,5 +76,15 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         then:
         thrown Exception
+    }
+
+    def 'getting the last tweet gets the most recent tweet from the database'() {
+
+        setup:
+        def status = twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now())
+        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(1))
+
+        expect:
+        twitterBotService.lastTweet == status
     }
 }

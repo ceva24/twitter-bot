@@ -30,7 +30,7 @@ class TweetServiceSpec extends Specification {
         then:
         result.id == 1L
         result.text == 'test'
-        result.timestamp == new DateTime(now)
+        result.tweetedOn == new DateTime(now)
     }
 
     def 'an exception is propagated when the tweet is unsuccessful'() {

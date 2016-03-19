@@ -8,9 +8,9 @@ import org.springframework.boot.context.web.SpringBootServletInitializer
 @SpringBootApplication
 class Application extends SpringBootServletInitializer {
 
-    static def main(def args) {
+    static void main(String[] args) {
 
-        SpringApplication.run Application, args as String[]
+        SpringApplication.run Application, args
     }
 
     @Override

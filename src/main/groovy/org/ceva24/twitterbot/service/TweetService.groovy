@@ -16,6 +16,6 @@ class TweetService {
 
         def tweet = twitter.timelineOperations().updateStatus text
 
-        return new Tweet(timestamp: new DateTime(tweet.createdAt), id: tweet.id, text: tweet.text)
+        return new Tweet(tweetedOn: new DateTime(tweet.createdAt), id: tweet.id, text: tweet.text)
     }
 }

@@ -18,6 +18,6 @@ class StubTweetService extends TweetService {
 
         log.info 'development profile: returning without updating status on twitter'
 
-        return new Tweet(timestamp: new DateTime(), id: 1, text: text)
+        return new Tweet(tweetedOn: new DateTime(), id: 1, text: text)
     }
 }

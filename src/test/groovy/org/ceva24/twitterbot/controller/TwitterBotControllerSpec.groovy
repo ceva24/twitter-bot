@@ -1,8 +1,8 @@
 package org.ceva24.twitterbot.controller
 
+import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.service.DowntimePeriodService
 import org.ceva24.twitterbot.service.TwitterBotService
-import org.ceva24.twitterbot.twitter.Tweet
 import org.joda.time.DateTime
 import org.joda.time.Period
 import spock.lang.Specification
@@ -21,18 +21,18 @@ class TwitterBotControllerSpec extends Specification {
     def 'the status shows the last tweet'() {
 
         given:
-        controller.twitterBotService.lastTweet >> new Tweet(id: 1, timestamp: DateTime.parse('2010-06-30T01:20'), text: 'test tweet')
+        controller.twitterBotService.lastTweet >> new TwitterStatus(id: 1, tweetedOn: DateTime.parse('2010-06-30T01:20'), text: 'test tweet')
 
         when:
         def response = controller.status()
 
         then:
         response.status.lastTweet.id == 1L
-        response.status.lastTweet.timestamp == DateTime.parse('2010-06-30T01:20')
+        response.status.lastTweet.tweetedOn == DateTime.parse('2010-06-30T01:20')
         response.status.lastTweet.text == 'test tweet'
     }
 
-    def 'the status shows lasttweet as null when no tweets have been sent'() {
+    def 'the status shows the last tweet as null when no tweets have been sent'() {
 
         when:
         def response = controller.status()

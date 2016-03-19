@@ -5,7 +5,6 @@ import org.joda.time.Interval
 
 class PeriodCalculator {
 
-    final DateTime current = DateTime.now()
     private final DateTime start
     private final Long periodLength
 
@@ -22,14 +21,14 @@ class PeriodCalculator {
 
     def getDurationSinceStart() {
 
-        return new Interval(start.millis, current.millis).toDuration()
+        return new Interval(start.millis, DateTime.now().millis).toDuration()
     }
 
     def getDurationUntilEnd() {
 
         def end = start.millis + periodToMillis()
 
-        return new Interval(Math.min(current.millis, end), end).toDuration()
+        return new Interval(Math.min(DateTime.now().millis, end), end).toDuration()
     }
 
     protected def periodToMillis() {
