@@ -4,6 +4,7 @@ import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.repository.ConfigRepository
 import org.ceva24.twitterbot.repository.TwitterStatusRepository
+import org.ceva24.twitterbot.twitter.Tweet
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -11,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TwitterBotService {
+
+    Tweet lastTweet
 
     @Autowired
     TwitterStatusRepository twitterStatusRepository
@@ -30,7 +33,11 @@ class TwitterBotService {
 
         activateDowntimeModeIfComplete()
 
-        return tweetService.sendTweet(status.text)
+        def tweet = tweetService.sendTweet status.text
+
+        lastTweet = tweet
+
+        return tweet
     }
 
     protected def updateStatusTweetedOn(TwitterStatus status) {

@@ -2,7 +2,7 @@ spring:
   profiles.active: development
   jpa.properties.jadira.usertype.autoRegisterUserTypes: true
 
-info.build:
+info.application:
   name: ${name}
   version: ${version}
 
@@ -25,8 +25,7 @@ security.user:
   password: pass
 
 org.ceva24.twitter-bot:
-  tweet.quiet-period.seconds: 10
-  tweet.downtime-period.seconds: 20
+  tweet.downtime-period.seconds: 70
   twitter:
     consumer-key:
     consumer-secret:
@@ -60,6 +59,4 @@ spring:
 
 security.require-ssl: true
 
-org.ceva24.twitter-bot.tweet:
-  quiet-period.seconds: 84600 # 23.5 hours
-  downtime-period.seconds: 2419200 # 1 month
+org.ceva24.twitter-bot.tweet.downtime-period.seconds: 2419200 # 1 month

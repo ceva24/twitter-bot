@@ -2,7 +2,6 @@ package org.ceva24.twitterbot.util
 
 import org.joda.time.DateTime
 import org.joda.time.Interval
-import org.springframework.util.Assert
 
 class PeriodCalculator {
 
@@ -11,8 +10,6 @@ class PeriodCalculator {
     private final Long periodLength
 
     PeriodCalculator(DateTime start, Long periodLength) {
-
-        Assert.notNull start, 'Start date cannot be null'
 
         this.start = start
         this.periodLength = periodLength

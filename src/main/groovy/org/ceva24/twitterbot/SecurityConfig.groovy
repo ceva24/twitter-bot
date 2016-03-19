@@ -1,4 +1,4 @@
-package org.ceva24.twitterbot.config
+package org.ceva24.twitterbot
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
@@ -16,9 +16,7 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) {
 
-        http.authorizeRequests()
-            .antMatchers('/info', '/health').permitAll()
-            .anyRequest().fullyAuthenticated().and().httpBasic().realmName realm
+        http.authorizeRequests().anyRequest().fullyAuthenticated().and().httpBasic().realmName realm
 
         http.csrf().disable().headers().frameOptions().disable()
     }

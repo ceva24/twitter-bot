@@ -1,5 +1,6 @@
 package org.ceva24.twitterbot.service
 
+import org.ceva24.twitterbot.twitter.Tweet
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.social.twitter.api.Twitter
@@ -15,13 +16,6 @@ class TweetService {
 
         def tweet = twitter.timelineOperations().updateStatus text
 
-        return new TweetResult(timestamp: new DateTime(tweet.createdAt), id: tweet.id, text: tweet.text)
-    }
-
-    static class TweetResult {
-
-        DateTime timestamp
-        Long id
-        String text
+        return new Tweet(timestamp: new DateTime(tweet.createdAt), id: tweet.id, text: tweet.text)
     }
 }

@@ -4,11 +4,10 @@ import org.apache.tomcat.util.codec.binary.Base64
 import org.ceva24.twitterbot.Application
 import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.service.TweetService
-import org.ceva24.twitterbot.service.TwitterBotService
 import org.ceva24.twitterbot.test.TestApplication
 import org.ceva24.twitterbot.test.TestConfigRepository
 import org.ceva24.twitterbot.test.TestTwitterStatusRepository
+import org.ceva24.twitterbot.twitter.TweetSender
 import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
 import org.joda.time.DateTimeZone
@@ -21,23 +20,19 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.social.DuplicateStatusException
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@WebIntegrationTest(['server.port=0', 'management.port=0'])
 @ActiveProfiles('test')
+@WebIntegrationTest(randomPort = true)
 @ContextConfiguration(loader = SpringApplicationContextLoader, classes = [Application, TestApplication])
 class TwitterBotControllerIntegrationSpec extends Specification {
 
     @Value('${local.server.port}')
     int port
-
-    @Value('${local.management.port}')
-    int managementPort
 
     @Value('${security.user.name}')
     String username
@@ -45,8 +40,11 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     @Value('${security.user.password}')
     String password
 
+    @Value('${org.ceva24.twitter-bot.tweet.downtime-period.seconds}')
+    Integer downtimePeriod
+
     @Autowired
-    TwitterBotService twitterBotService
+    TweetSender tweetSender
 
     @Autowired
     TestTwitterStatusRepository testTwitterStatusRepository
@@ -55,7 +53,6 @@ class TwitterBotControllerIntegrationSpec extends Specification {
     TestConfigRepository testConfigRepository
 
     RestTemplate restTemplate
-
     HttpHeaders authenticationHeader
 
     def setup() {
@@ -72,7 +69,7 @@ class TwitterBotControllerIntegrationSpec extends Specification {
         testConfigRepository.deleteAll()
     }
 
-    def 'an unauthenticated request returns http unauthorized'() {
+    def 'unauthenticated requests returns http unauthorized'() {
 
         when:
         def response = restTemplate.getForEntity "http://localhost:${port}/", Map
@@ -84,25 +81,7 @@ class TwitterBotControllerIntegrationSpec extends Specification {
         response.body.status == HttpStatus.UNAUTHORIZED.value()
     }
 
-    def 'an unauthenticated request to the info page is successful'() {
-
-        expect:
-        restTemplate.getForEntity("http://localhost:${managementPort}/info", Map).statusCode == HttpStatus.OK
-}
-
-    def 'an unauthenticated request to the health page is successful'() {
-
-        expect:
-        restTemplate.getForEntity("http://localhost:${managementPort}/health", Map).statusCode == HttpStatus.OK
-    }
-
-    def 'an authenticated request to send a tweet is successful'() {
-
-        setup:
-        DateTimeUtils.currentMillisFixed = 100000
-
-        and:
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test', sequenceNo: 1)
+    def 'the last tweet status is null when no tweets have been sent'() {
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -111,67 +90,62 @@ class TwitterBotControllerIntegrationSpec extends Specification {
         response.statusCode == HttpStatus.OK
 
         and:
-        response.body.timestamp == new DateTime(100000, DateTimeZone.UTC).toString()
-        response.body.status == HttpStatus.OK.value()
-        response.body.id == 1
-        response.body.text == 'test'
+        !response.body.status.lastTweet
     }
 
-    def 'an authenticated request to send a tweet during the quiet period returns http bad request'() {
+    def 'the last tweet status shows the last tweet that was sent'() {
 
         setup:
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test', sequenceNo: 1, tweetedOn: DateTime.now())
+        DateTimeUtils.currentMillisFixed = 100000
+
+        and:
+        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
+
+        when:
+        tweetSender.tweet()
+
+        and:
+        def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+
+        then:
+        response.statusCode == HttpStatus.OK
+
+        and:
+        response.body.status.lastTweet.timestamp == new DateTime(100000, DateTimeZone.UTC).toString()
+        response.body.status.lastTweet.id == 1
+        response.body.status.lastTweet.text == 'test 1'
+    }
+
+    def 'the status correctly shows when the downtime period is inactive'() {
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.BAD_REQUEST
+        response.statusCode == HttpStatus.OK
 
         and:
-        response.body.status == HttpStatus.BAD_REQUEST.value()
-        response.body.error == HttpStatus.BAD_REQUEST.reasonPhrase
-        response.body.message.contains 'Cannot send tweet during quiet period'
-        !response.body.exception
+        !response.body.status.downtime.active
+        response.body.status.downtime.remaining == 0
     }
 
-    def 'an authenticated request to send a tweet during the downtime period returns http bad request'() {
+    def 'the status shows when the downtime period is active'() {
 
         setup:
-        testConfigRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now())
+        DateTimeUtils.currentMillisFixed = 100000
+
+        and:
+        testConfigRepository.save(new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now()))
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.BAD_REQUEST
+        response.statusCode == HttpStatus.OK
 
         and:
-        response.body.status == HttpStatus.BAD_REQUEST.value()
-        response.body.error == HttpStatus.BAD_REQUEST.reasonPhrase
-        response.body.message.contains 'Cannot send tweet during downtime period'
-        !response.body.exception
-    }
-
-    def 'an authenticated request to send a duplicate tweet returns http bad request'() {
-
-        setup:
-        testTwitterStatusRepository.save new TwitterStatus(id: 1, text: 'test', sequenceNo: 1)
-
-        and:
-        twitterBotService.tweetService = Mock(TweetService) { sendTweet(_) >> { throw new DuplicateStatusException('twitter', 'duplicate status error') } }
-
-        when:
-        def response = restTemplate.exchange "http://localhost:${port}/", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
-
-        then:
-        response.statusCode == HttpStatus.BAD_REQUEST
-
-        and:
-        response.body.status == HttpStatus.BAD_REQUEST.value()
-        response.body.error == HttpStatus.BAD_REQUEST.reasonPhrase
-        response.body.message == 'duplicate status error'
-        !response.body.exception
+        response.body.status.downtime.active
+        response.body.status.downtime.remaining == downtimePeriod
     }
 
     @Unroll

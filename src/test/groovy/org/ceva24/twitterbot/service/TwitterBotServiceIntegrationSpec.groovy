@@ -12,10 +12,12 @@ import org.springframework.boot.test.IntegrationTest
 import org.springframework.boot.test.SpringApplicationContextLoader
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.transaction.annotation.Transactional
 import spock.lang.Specification
 
 @ActiveProfiles('test')
 @IntegrationTest
+@Transactional
 @ContextConfiguration(loader = SpringApplicationContextLoader, classes = [Application, TestApplication])
 class TwitterBotServiceIntegrationSpec extends Specification {
 
@@ -69,5 +71,14 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         and:
         !testTwitterStatusRepository.findOne(1).tweetedOn
         !configRepository.findOne(Config.ConfigId.DOWNTIME).activeOn
+    }
+
+    def 'an exception is thrown when the next status to tweet is not found'() {
+
+        when:
+        twitterBotService.tweet()
+
+        then:
+        thrown Exception
     }
 }

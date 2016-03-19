@@ -1,13 +1,10 @@
 package org.ceva24.twitterbot.controller
 
-import org.ceva24.twitterbot.exception.DowntimePeriodException
-import org.ceva24.twitterbot.exception.QuietPeriodException
-import org.ceva24.twitterbot.service.QuietPeriodService
-import org.ceva24.twitterbot.service.TweetService
+import org.ceva24.twitterbot.service.DowntimePeriodService
 import org.ceva24.twitterbot.service.TwitterBotService
+import org.ceva24.twitterbot.twitter.Tweet
 import org.joda.time.DateTime
 import org.joda.time.Period
-import org.springframework.http.HttpStatus
 import spock.lang.Specification
 
 class TwitterBotControllerSpec extends Specification {
@@ -16,57 +13,61 @@ class TwitterBotControllerSpec extends Specification {
 
     def setup() {
 
-        controller = new TwitterBotController(quietPeriodService: Mock(QuietPeriodService), twitterBotService: Mock(TwitterBotService))
+        controller = new TwitterBotController(twitterBotService: Mock(TwitterBotService), downtimePeriodService: Mock(DowntimePeriodService))
+
+        controller.downtimePeriodService.downtimePeriodTimeRemaining >> new Period(0)
     }
 
-    def 'requests check that the quiet period and downtime period is not active and then tweet a new status'() {
-
-        when:
-        controller.tweet()
-
-        then:
-        1 * controller.quietPeriodService.checkCanTweet()
-        1 * controller.twitterBotService.tweet() >> Mock(TweetService.TweetResult)
-    }
-
-    def 'new statuses are not tweeted if the quiet period is active'() {
-
-        when:
-        controller.tweet()
-
-        then:
-        1 * controller.quietPeriodService.checkCanTweet() >> { throw new QuietPeriodException(new Period()) }
-        0 * controller.twitterBotService.tweet()
-
-        and:
-        thrown QuietPeriodException
-    }
-
-    def 'new statuses are not tweeted if the downtime period is active'() {
-
-        when:
-        controller.tweet()
-
-        then:
-        1 * controller.quietPeriodService.checkCanTweet() >> { throw new DowntimePeriodException(new Period()) }
-        0 * controller.twitterBotService.tweet()
-
-        and:
-        thrown DowntimePeriodException
-    }
-
-    def 'a successful status update returns the tweet data in the response body'() {
+    def 'the status shows the last tweet'() {
 
         given:
-        controller.twitterBotService.tweet() >> new TweetService.TweetResult(timestamp: new DateTime(2000, 1, 1, 0, 0), id: 1, text: 'test')
+        controller.twitterBotService.lastTweet >> new Tweet(id: 1, timestamp: DateTime.parse('2010-06-30T01:20'), text: 'test tweet')
 
         when:
-        def result = controller.tweet()
+        def response = controller.status()
 
         then:
-        result.timestamp == new DateTime(2000, 1, 1, 0, 0)
-        result.status == HttpStatus.OK.value()
-        result.id == 1L
-        result.text == 'test'
+        response.status.lastTweet.id == 1L
+        response.status.lastTweet.timestamp == DateTime.parse('2010-06-30T01:20')
+        response.status.lastTweet.text == 'test tweet'
+    }
+
+    def 'the status shows lasttweet as null when no tweets have been sent'() {
+
+        when:
+        def response = controller.status()
+
+        then:
+        !response.status.lastTweet
+    }
+
+    def 'the status shows the downtime period as inactive with no time remaining when the downtime period is not active'() {
+
+        given:
+        controller.downtimePeriodService.downtimePeriodTimeRemaining >> new Period(0)
+        controller.downtimePeriodService.isDowntimePeriod() >> false
+
+        when:
+        def response = controller.status()
+
+        then:
+        !response.status.downtime.active
+        response.status.downtime.remaining == 0
+    }
+
+    def 'the status shows the downtime period as active and the time remaining when the downtime period is active'() {
+
+        given:
+        controller.downtimePeriodService.isDowntimePeriod() >> true
+
+        when:
+        def response = controller.status()
+
+        then:
+        _ * controller.downtimePeriodService.downtimePeriodTimeRemaining >> new Period(10000)
+
+        and:
+        response.status.downtime.active
+        response.status.downtime.remaining == 10
     }
 }
