@@ -1,10 +1,9 @@
 package org.ceva24.twitterbot.monitoring
 
-import org.ceva24.twitterbot.domain.Config
-import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.repository.ConfigRepository
-import org.ceva24.twitterbot.service.ConfigService
-import org.ceva24.twitterbot.service.TwitterStatusService
+import org.ceva24.twitterbot.domain.ApplicationStatus
+import org.ceva24.twitterbot.domain.Tweet
+import org.ceva24.twitterbot.service.ApplicationStatusService
+import org.ceva24.twitterbot.service.TweetService
 import org.joda.time.DateTime
 import org.joda.time.Period
 import org.springframework.boot.actuate.health.Status
@@ -16,13 +15,13 @@ class TwitterBotHealthIndicatorSpec extends Specification {
 
     def setup() {
 
-        indicator = new TwitterBotHealthIndicator( downtimePeriod: 70, twitterStatusService: Mock(TwitterStatusService),
-                configService: Mock(ConfigService), configRepository: Mock(ConfigRepository))
+        indicator = new TwitterBotHealthIndicator(tweetService: Mock(TweetService), applicationStatusService: Mock(ApplicationStatusService))
 
-        indicator.configService.downtimePeriodTimeRemaining >> new Period(0)
-        indicator.configService.isDowntimePeriod() >> false
+        indicator.applicationStatusService.downtimePeriod >> 70
+        indicator.applicationStatusService.downtimePeriodTimeRemaining >> new Period(0)
+        indicator.applicationStatusService.isDowntimePeriod() >> false
 
-        indicator.twitterStatusService.lastTweet >> new TwitterStatus()
+        indicator.tweetService.lastTweet >> new Tweet()
     }
 
     def 'the status shows the last tweet'() {
@@ -31,7 +30,7 @@ class TwitterBotHealthIndicatorSpec extends Specification {
         def health = indicator.health()
 
         then:
-        _ * indicator.twitterStatusService.lastTweet >> new TwitterStatus(id: 1, tweetedOn: DateTime.parse('2010-06-30T01:20'), text: 'test tweet')
+        _ * indicator.tweetService.lastTweet >> new Tweet(id: 1, tweetedOn: DateTime.parse('2010-06-30T01:20'), text: 'test tweet')
 
         and:
         health.details.lastTweet.id == 1L
@@ -67,8 +66,8 @@ class TwitterBotHealthIndicatorSpec extends Specification {
         def health = indicator.health()
 
         then:
-        _ * indicator.configService.isDowntimePeriod() >> true
-        _ * indicator.configService.downtimePeriodTimeRemaining >> new Period(100000)
+        _ * indicator.applicationStatusService.isDowntimePeriod() >> true
+        _ * indicator.applicationStatusService.downtimePeriodTimeRemaining >> new Period(100000)
 
         and:
         health.details.isDowntimePeriodActive
@@ -81,7 +80,7 @@ class TwitterBotHealthIndicatorSpec extends Specification {
         def health = indicator.health()
 
         then:
-        _ * indicator.configService.isDowntimePeriod() >> true
+        _ * indicator.applicationStatusService.isDowntimePeriod() >> true
 
         and:
         health.status == Status.OUT_OF_SERVICE
@@ -93,8 +92,8 @@ class TwitterBotHealthIndicatorSpec extends Specification {
         def health = indicator.health()
 
         then:
-        _ * indicator.configRepository.findOne(Config.ConfigId.DOWNTIME) >> new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now().minusSeconds(indicator.downtimePeriod))
-        _ * indicator.twitterStatusService.lastTweet >> new TwitterStatus(tweetedOn: DateTime.now().minusDays(2))
+        _ * indicator.applicationStatusService.downtimeStatus >> new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME, activeOn: DateTime.now().minusSeconds(indicator.applicationStatusService.downtimePeriod))
+        _ * indicator.tweetService.lastTweet >> new Tweet(tweetedOn: DateTime.now().minusDays(2))
 
         and:
         health.status == Status.UP
@@ -106,8 +105,8 @@ class TwitterBotHealthIndicatorSpec extends Specification {
         def health = indicator.health()
 
         then:
-        _ * indicator.configRepository.findOne(Config.ConfigId.DOWNTIME) >> new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now().minusSeconds(indicator.downtimePeriod))
-        _ * indicator.twitterStatusService.lastTweet >> new TwitterStatus(tweetedOn: DateTime.now().minusDays(2))
+        _ * indicator.applicationStatusService.downtimeStatus >> new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME, activeOn: DateTime.now().minusSeconds(indicator.applicationStatusService.downtimePeriod))
+        _ * indicator.tweetService.lastTweet >> new Tweet(tweetedOn: DateTime.now().minusDays(2))
 
         and:
         health.status == Status.UP
@@ -119,8 +118,8 @@ class TwitterBotHealthIndicatorSpec extends Specification {
         def health = indicator.health()
 
         then:
-        _ * indicator.configRepository.findOne(Config.ConfigId.DOWNTIME) >> new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now().minusSeconds(indicator.downtimePeriod).minusDays(1))
-        _ * indicator.twitterStatusService.lastTweet >> new TwitterStatus(tweetedOn: DateTime.now().minusDays(2))
+        _ * indicator.applicationStatusService.downtimeStatus >> new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME, activeOn: DateTime.now().minusSeconds(indicator.applicationStatusService.downtimePeriod).minusDays(1))
+        _ * indicator.tweetService.lastTweet >> new Tweet(tweetedOn: DateTime.now().minusDays(2))
 
         and:
         health.status == Status.DOWN

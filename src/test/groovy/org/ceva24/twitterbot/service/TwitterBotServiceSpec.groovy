@@ -1,7 +1,7 @@
 package org.ceva24.twitterbot.service
 
-import org.ceva24.twitterbot.domain.Config
-import org.ceva24.twitterbot.domain.TwitterStatus
+import org.ceva24.twitterbot.domain.ApplicationStatus
+import org.ceva24.twitterbot.domain.Tweet
 import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
 import spock.lang.Specification
@@ -12,7 +12,7 @@ class TwitterBotServiceSpec extends Specification {
 
     def setup() {
 
-        twitterBotService = new TwitterBotService(twitterStatusService: Mock(TwitterStatusService), configService: Mock(ConfigService), tweetService: Mock(TwitterService))
+        twitterBotService = new TwitterBotService(tweetService: Mock(TweetService), applicationStatusService: Mock(ApplicationStatusService), twitterService: Mock(TwitterService))
     }
 
     def 'sending a tweet updates the status in the database and sends the tweet'() {
@@ -21,94 +21,94 @@ class TwitterBotServiceSpec extends Specification {
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        def status = Mock(TwitterStatus) { getText() >> 'test' }
+        def tweet = Mock(Tweet) { getText() >> 'test' }
 
         when:
-        twitterBotService.tweetNextStatus()
+        twitterBotService.sendNextTweet()
 
         then:
-        1 * twitterBotService.twitterStatusService.nextTweet >> status
-        1 * twitterBotService.tweetService.sendTweet('test')
-        1 * status.setProperty('tweetedOn', new DateTime(100000))
+        1 * twitterBotService.tweetService.nextTweet >> tweet
+        1 * twitterBotService.twitterService.sendTweet('test')
+        1 * tweet.setProperty('tweetedOn', new DateTime(100000))
     }
 
     def 'no tweet is sent if the next status is not found'() {
 
         when:
-        twitterBotService.tweetNextStatus()
+        twitterBotService.sendNextTweet()
 
         then:
-        1 * twitterBotService.twitterStatusService.nextTweet
-        0 * twitterBotService.tweetService.sendTweet(_)
+        1 * twitterBotService.tweetService.nextTweet
+        0 * twitterBotService.twitterService.sendTweet(_)
     }
 
-    def "an exception thrown when attempting to update a twitter status' tweeted on value is propagated"() {
+    def "an exception thrown when attempting to update a tweet's tweeted on value is propagated"() {
 
         setup:
         def exception = new RuntimeException('database error')
 
         when:
-        twitterBotService.tweetNextStatus()
+        twitterBotService.sendNextTweet()
 
         then:
-        twitterBotService.twitterStatusService.nextTweet >> { throw exception }
+        twitterBotService.tweetService.nextTweet >> { throw exception }
 
         and:
         def e = thrown Exception
         e == exception
     }
 
-    def 'the downtime period is not started if not all statuses have been tweeted'() {
+    def 'the downtime period is not started if not all tweets have been sent'() {
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
-        1 * twitterBotService.twitterStatusService.allStatusesTweeted() >> false
-        0 * twitterBotService.configService.downtimeConfig
-        0 * twitterBotService.twitterStatusService.resetAllTwitterStatuses()
+        1 * twitterBotService.tweetService.allTweetsSent() >> false
+        0 * twitterBotService.applicationStatusService.downtimeStatus
+        0 * twitterBotService.tweetService.resetAllTweets()
     }
 
-    def 'starting the downtime period updates the date on the downtime config'() {
+    def 'starting the downtime period updates the date on the downtime status'() {
 
         setup:
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        twitterBotService.twitterStatusService.allStatusesTweeted() >> true
+        twitterBotService.tweetService.allTweetsSent() >> true
 
         and:
-        def config = Mock Config
-        twitterBotService.configService.downtimeConfig >> config
+        def status = Mock ApplicationStatus
+        twitterBotService.applicationStatusService.downtimeStatus >> status
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
-        1 * config.setProperty('activeOn', new DateTime(100000))
+        1 * status.setProperty('activeOn', new DateTime(100000))
     }
 
-    def 'starting the downtime period reset all twitter statuses'() {
+    def 'starting the downtime period reset all tweets'() {
 
         setup:
-        twitterBotService.configService.downtimeConfig >> Mock(Config)
+        twitterBotService.applicationStatusService.downtimeStatus >> Mock(ApplicationStatus)
 
         and:
-        twitterBotService.twitterStatusService.allStatusesTweeted() >> true
+        twitterBotService.tweetService.allTweetsSent() >> true
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
-        1 * twitterBotService.twitterStatusService.resetAllTwitterStatuses()
+        1 * twitterBotService.tweetService.resetAllTweets()
     }
 
-    def 'attempting to start the downtime period when there is no config in the database does nothing'() {
+    def 'attempting to start the downtime period when there is no status in the database does nothing'() {
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
-        0 * twitterBotService.twitterStatusService.resetAllTwitterStatuses()
+        0 * twitterBotService.tweetService.resetAllTweets()
     }
 }

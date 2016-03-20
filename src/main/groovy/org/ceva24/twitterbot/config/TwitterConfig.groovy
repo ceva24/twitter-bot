@@ -26,7 +26,7 @@ class TwitterConfig {
 
     @Profile(['development', 'test'])
     @Bean
-    TwitterService tweetService() {
+    TwitterService twitterService() {
 
         return new StubTwitterService()
     }

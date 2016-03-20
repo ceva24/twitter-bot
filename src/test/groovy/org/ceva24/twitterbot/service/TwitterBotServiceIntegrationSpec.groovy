@@ -1,10 +1,10 @@
 package org.ceva24.twitterbot.service
 
 import org.ceva24.twitterbot.Application
-import org.ceva24.twitterbot.domain.Config
-import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.repository.ConfigRepository
-import org.ceva24.twitterbot.repository.TwitterStatusRepository
+import org.ceva24.twitterbot.domain.ApplicationStatus
+import org.ceva24.twitterbot.domain.Tweet
+import org.ceva24.twitterbot.repository.ApplicationStatusRepository
+import org.ceva24.twitterbot.repository.TweetRepository
 import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,25 +27,25 @@ class TwitterBotServiceIntegrationSpec extends Specification {
     TwitterBotService twitterBotService
 
     @Autowired
-    TwitterStatusRepository twitterStatusRepository
+    TweetRepository tweetRepository
 
     @Autowired
-    ConfigRepository configRepository
+    ApplicationStatusRepository applicationStatusRepository
 
     @Autowired
     EntityManager entityManager
 
-    def "an exception thrown when sending a tweet does not update the twitter status' tweeted on value"() {
+    def "an exception thrown when sending a tweet does not update the tweet's tweeted on value"() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
+        tweetRepository.save new Tweet(id: 1, text: 'test 1', sequenceNo: 1)
         entityManager.flush()
 
         and:
-        twitterBotService.tweetService = Mock(TwitterService) { sendTweet(_) >> { throw new RuntimeException() }}
+        twitterBotService.twitterService = Mock(TwitterService) { sendTweet(_) >> { throw new RuntimeException() }}
 
         when:
-        twitterBotService.tweetNextStatus()
+        twitterBotService.sendNextTweet()
 
         then:
         thrown RuntimeException
@@ -54,7 +54,7 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         entityManager.clear()
 
         and:
-        !twitterStatusRepository.findOne(1L).tweetedOn
+        !tweetRepository.findOne(1L).tweetedOn
     }
 
     def 'starting the downtime period updates the downtime last active date'() {
@@ -63,43 +63,43 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME)
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
-        configRepository.findOne(Config.ConfigId.DOWNTIME).activeOn == new DateTime(100000)
+        applicationStatusRepository.findOne(ApplicationStatus.ApplicationStatusId.DOWNTIME).activeOn == new DateTime(100000)
     }
 
     def 'all tweets have their tweeted on values reset when the downtime period is activated'() {
 
         setup:
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
-        twitterStatusRepository.save([new TwitterStatus(id: 1, tweetedOn: DateTime.now()), new TwitterStatus(id: 2, tweetedOn: DateTime.now())])
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME)
+        tweetRepository.save([new Tweet(id: 1, tweetedOn: DateTime.now()), new Tweet(id: 2, tweetedOn: DateTime.now())])
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
         entityManager.clear()
 
         and:
-        twitterStatusRepository.count() == 2L
-        twitterStatusRepository.findAll().every { !it.tweetedOn }
+        tweetRepository.count() == 2L
+        tweetRepository.findAll().every { !it.tweetedOn }
     }
 
-    def "an exception thrown when resetting all twitter statuses does not update the downtime period's active on date"() {
+    def "an exception thrown when resetting all tweets does not update the downtime period's active on date"() {
 
         setup:
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME)
         entityManager.flush()
 
         and:
-        twitterBotService.twitterStatusService = Mock(TwitterStatusService) { allStatusesTweeted() >> true; resetAllTwitterStatuses() >> { throw new RuntimeException() }}
+        twitterBotService.tweetService = Mock(TweetService) { allTweetsSent() >> true; resetAllTweets() >> { throw new RuntimeException() }}
 
         when:
-        twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        twitterBotService.startDowntimePeriodIfAllTweetsSent()
 
         then:
         thrown RuntimeException
@@ -108,6 +108,6 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         entityManager.clear()
 
         and:
-        !configRepository.findOne(Config.ConfigId.DOWNTIME).activeOn
+        !applicationStatusRepository.findOne(ApplicationStatus.ApplicationStatusId.DOWNTIME).activeOn
     }
 }

@@ -1,6 +1,6 @@
 package org.ceva24.twitterbot
 
-import org.ceva24.twitterbot.service.ConfigService
+import org.ceva24.twitterbot.service.ApplicationStatusService
 import org.ceva24.twitterbot.service.TwitterBotService
 import org.joda.time.Period
 import org.springframework.context.MessageSource
@@ -8,34 +8,34 @@ import spock.lang.Specification
 
 class TwitterBotSpec extends Specification {
 
-    TwitterBot tweetSender
+    TwitterBot twitterBot
 
     def setup() {
 
-        tweetSender = new TwitterBot(twitterBotService: Mock(TwitterBotService), configService: Mock(ConfigService), messageSource: Mock(MessageSource))
+        twitterBot = new TwitterBot(twitterBotService: Mock(TwitterBotService), applicationStatusService: Mock(ApplicationStatusService), messageSource: Mock(MessageSource))
 
-        tweetSender.configService.downtimePeriodTimeRemaining >> new Period(10)
+        twitterBot.applicationStatusService.downtimePeriodTimeRemaining >> new Period(10)
     }
 
     def 'a tweet is sent and the downtime period is started if necessary when the downtime period is not active'() {
 
         when:
-        tweetSender.tweet()
+        twitterBot.tweet()
 
         then:
-        1 * tweetSender.twitterBotService.tweetNextStatus()
-        1 * tweetSender.twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+        1 * twitterBot.twitterBotService.sendNextTweet()
+        1 * twitterBot.twitterBotService.startDowntimePeriodIfAllTweetsSent()
     }
 
     def 'a tweet is not sent when the downtime period is active'() {
 
         given:
-        tweetSender.configService.isDowntimePeriod() >> true
+        twitterBot.applicationStatusService.isDowntimePeriod() >> true
 
         when:
-        tweetSender.tweet()
+        twitterBot.tweet()
 
         then:
-        0 * tweetSender.twitterBotService.tweetNextStatus()
+        0 * twitterBot.twitterBotService.sendNextTweet()
     }
 }

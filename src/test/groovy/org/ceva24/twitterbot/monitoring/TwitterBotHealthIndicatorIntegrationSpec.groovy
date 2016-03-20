@@ -2,10 +2,10 @@ package org.ceva24.twitterbot.monitoring
 
 import org.apache.tomcat.util.codec.binary.Base64
 import org.ceva24.twitterbot.Application
-import org.ceva24.twitterbot.domain.Config
-import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.repository.ConfigRepository
-import org.ceva24.twitterbot.repository.TwitterStatusRepository
+import org.ceva24.twitterbot.domain.ApplicationStatus
+import org.ceva24.twitterbot.domain.Tweet
+import org.ceva24.twitterbot.repository.ApplicationStatusRepository
+import org.ceva24.twitterbot.repository.TweetRepository
 import org.ceva24.twitterbot.TwitterBot
 import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
@@ -43,13 +43,13 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     Integer downtimePeriod
 
     @Autowired
-    TwitterStatusRepository twitterStatusRepository
+    TweetRepository tweetRepository
 
     @Autowired
-    ConfigRepository configRepository
+    ApplicationStatusRepository applicationStatusRepository
 
     @Autowired
-    TwitterBot tweetSender
+    TwitterBot twitterBot
 
     RestTemplate restTemplate
     HttpHeaders authenticationHeader
@@ -61,13 +61,13 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         authenticationHeader = new HttpHeaders()
         authenticationHeader.add 'Authorization', "Basic ${new String(Base64.encodeBase64("${username}:${password}".bytes))}"
 
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME)
     }
 
     def cleanup() {
 
-        twitterStatusRepository.deleteAll()
-        configRepository.deleteAll()
+        tweetRepository.deleteAll()
+        applicationStatusRepository.deleteAll()
     }
 
     def 'unauthenticated requests returns http unauthorized'() {
@@ -85,7 +85,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     def 'the health indicator shows the last tweet as null when no tweets have been sent'() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
+        tweetRepository.save new Tweet(id: 1, text: 'test 1', sequenceNo: 1)
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -100,10 +100,10 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        twitterStatusRepository.save([new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1), new TwitterStatus(id: 2, text: 'test 2', sequenceNo: 2)])
+        tweetRepository.save([new Tweet(id: 1, text: 'test 1', sequenceNo: 1), new Tweet(id: 2, text: 'test 2', sequenceNo: 2)])
 
         when:
-        tweetSender.tweet()
+        twitterBot.tweet()
 
         and:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -130,7 +130,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now())
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME, activeOn: DateTime.now())
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -143,7 +143,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     def 'when the service is tweeting as normal the health indicator shows up'() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now())
+        tweetRepository.save new Tweet(id: 1, tweetedOn: DateTime.now())
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -155,7 +155,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     def 'when the service has stopped tweeting for too long the health indicator shows down'() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(2))
+        tweetRepository.save new Tweet(id: 1, tweetedOn: DateTime.now().minusDays(2))
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -167,7 +167,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     def 'when the downtime period is active the health indicator shows out of service'() {
 
         setup:
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now())
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME, activeOn: DateTime.now())
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -179,8 +179,8 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     def 'when the downtime period has only just ended the health indicator still shows up'() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(2))
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now().minusSeconds(downtimePeriod).minusHours(23))
+        tweetRepository.save new Tweet(id: 1, tweetedOn: DateTime.now().minusDays(2))
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME, activeOn: DateTime.now().minusSeconds(downtimePeriod).minusHours(23))
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -189,10 +189,10 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         response.body.status == Status.UP.code
     }
 
-    def 'if there are no twitter statuses in the database, the health indicator shows down'() {
+    def 'if there are no tweets in the database, the health indicator shows down'() {
 
         setup:
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+        applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME)
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -201,10 +201,10 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         response.body.status == Status.DOWN.code
     }
 
-    def 'when the last status is tweeted and the downtime period begins, the last tweet in the health indicator becomes null'() {
+    def 'when the final tweet is sent and the downtime period begins, the last tweet in the health indicator becomes null'() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, sequenceNo: 1, text: 'test', tweetedOn: DateTime.now())
+        tweetRepository.save new Tweet(id: 1, sequenceNo: 1, text: 'test', tweetedOn: DateTime.now())
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
@@ -213,7 +213,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         response.body.twitterBot.lastTweet.id == 1
 
         when:
-        tweetSender.tweet()
+        twitterBot.tweet()
 
         and:
         response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map

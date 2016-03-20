@@ -8,13 +8,13 @@ import javax.persistence.Enumerated
 import javax.persistence.Id
 
 @Entity
-class Config {
+class ApplicationStatus {
 
     @Id
     @Enumerated(EnumType.STRING)
-    ConfigId id
+    ApplicationStatusId id
 
     DateTime activeOn
 
-    static enum ConfigId { DOWNTIME }
+    static enum ApplicationStatusId { DOWNTIME }
 }

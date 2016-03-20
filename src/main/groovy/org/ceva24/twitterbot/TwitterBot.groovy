@@ -1,7 +1,7 @@
 package org.ceva24.twitterbot
 
 import groovy.util.logging.Slf4j
-import org.ceva24.twitterbot.service.ConfigService
+import org.ceva24.twitterbot.service.ApplicationStatusService
 import org.ceva24.twitterbot.service.TwitterBotService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
@@ -16,24 +16,24 @@ class TwitterBot {
     TwitterBotService twitterBotService
 
     @Autowired
-    ConfigService configService
+    ApplicationStatusService applicationStatusService
 
     @Autowired
     MessageSource messageSource
 
-    @Scheduled(cron = '0 0 21 * * *')
+    @Scheduled(cron = '0/15 * * * * *')
     void tweet() {
 
-        if (configService.isDowntimePeriod()) {
+        if (applicationStatusService.isDowntimePeriod()) {
 
-            def remaining = configService.downtimePeriodTimeRemaining
+            def remaining = applicationStatusService.downtimePeriodTimeRemaining
 
             log.info "Not sending next tweet because the downtime period is active (time remaining: ${remaining.weeks}w ${remaining.days}d ${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s)"
         }
         else {
 
-            twitterBotService.tweetNextStatus()
-            twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
+            twitterBotService.sendNextTweet()
+            twitterBotService.startDowntimePeriodIfAllTweetsSent()
         }
     }
 }

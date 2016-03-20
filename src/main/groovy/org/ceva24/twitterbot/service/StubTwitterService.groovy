@@ -8,6 +8,6 @@ class StubTwitterService extends TwitterService {
     @Override
     def sendTweet(String text) {
 
-        log.info 'Development profile: returning without updating status on twitter'
+        log.info 'Returning without sending tweet to Twitter'
     }
 }

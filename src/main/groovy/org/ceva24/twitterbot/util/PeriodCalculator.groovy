@@ -6,7 +6,7 @@ import org.joda.time.Interval
 class PeriodCalculator {
 
     private final DateTime start
-    private final Long periodLength
+    private final Integer periodLength
 
     PeriodCalculator(DateTime start, Long periodLength) {
 

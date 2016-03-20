@@ -11,49 +11,49 @@ import org.springframework.transaction.annotation.Transactional
 class TwitterBotService {
 
     @Autowired
-    TwitterStatusService twitterStatusService
+    TweetService tweetService
 
     @Autowired
-    ConfigService configService
+    ApplicationStatusService applicationStatusService
 
     @Autowired
-    TwitterService tweetService
+    TwitterService twitterService
 
     @Transactional
-    def tweetNextStatus() {
+    def sendNextTweet() {
 
-        def status = twitterStatusService.nextTweet
+        def tweet = tweetService.nextTweet
 
-        if (!status) {
+        if (!tweet) {
 
-            log.error 'Failed to find next status to tweet'
+            log.error 'Failed to find next tweet to send'
             return
         }
 
-        status.tweetedOn = DateTime.now()
+        tweet.tweetedOn = DateTime.now()
 
-        tweetService.sendTweet status.text
+        twitterService.sendTweet tweet.text
 
-        log.info "Successfully tweeted next status: ${status}"
+        log.info "Successfully sent next tweet: ${tweet}"
     }
 
     @Transactional
-    def startDowntimePeriodIfAllStatusesTweeted() {
+    def startDowntimePeriodIfAllTweetsSent() {
 
-        if (!twitterStatusService.allStatusesTweeted()) return
+        if (!tweetService.allTweetsSent()) return
 
         log.info 'Starting downtime period'
 
-        def downtime = configService.downtimeConfig
+        def downtime = applicationStatusService.downtimeStatus
 
         if (!downtime) {
 
-            log.error 'Failed to find downtime configuration'
+            log.error 'Failed to find downtime status'
             return
         }
 
         downtime.activeOn = DateTime.now()
 
-        twitterStatusService.resetAllTwitterStatuses()
+        tweetService.resetAllTweets()
     }
 }

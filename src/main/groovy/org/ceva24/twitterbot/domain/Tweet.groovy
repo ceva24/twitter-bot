@@ -10,7 +10,7 @@ import javax.persistence.Id
 @Entity
 @EqualsAndHashCode
 @ToString(includePackage = false)
-class TwitterStatus {
+class Tweet {
 
     @Id
     Long id
