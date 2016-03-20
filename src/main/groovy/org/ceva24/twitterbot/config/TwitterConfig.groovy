@@ -1,4 +1,4 @@
-package org.ceva24.twitterbot
+package org.ceva24.twitterbot.config
 
 import org.ceva24.twitterbot.service.StubTwitterService
 import org.ceva24.twitterbot.service.TwitterService

@@ -1,4 +1,4 @@
-package org.ceva24.twitterbot
+package org.ceva24.twitterbot.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
