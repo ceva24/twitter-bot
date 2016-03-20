@@ -13,7 +13,6 @@ import org.springframework.boot.test.SpringApplicationContextLoader
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.transaction.annotation.Transactional
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import javax.persistence.EntityManager
@@ -36,15 +35,14 @@ class TwitterBotServiceIntegrationSpec extends Specification {
     @Autowired
     EntityManager entityManager
 
-    @Ignore('test rollbacks')
     def "an exception thrown when sending a tweet does not update the twitter status' tweeted on value"() {
 
         setup:
         twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
+        entityManager.flush()
 
         and:
-        twitterBotService.tweetService = Mock TwitterService
-        twitterBotService.tweetService.sendTweet(_) >> { throw new RuntimeException() }
+        twitterBotService.tweetService = Mock(TwitterService) { sendTweet(_) >> { throw new RuntimeException() }}
 
         when:
         twitterBotService.tweetNextStatus()
@@ -57,7 +55,6 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         and:
         !twitterStatusRepository.findOne(1L).tweetedOn
-        false
     }
 
     def 'starting the downtime period updates the downtime last active date'() {
@@ -92,15 +89,14 @@ class TwitterBotServiceIntegrationSpec extends Specification {
         twitterStatusRepository.findAll().every { !it.tweetedOn }
     }
 
-    @Ignore('test rollbacks')
     def "an exception thrown when resetting all twitter statuses does not update the downtime period's active on date"() {
 
         setup:
         configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+        entityManager.flush()
 
         and:
-        twitterBotService.twitterStatusService = Mock TwitterStatusService
-        twitterBotService.twitterStatusService.resetAllTwitterStatuses() >> { throw new RuntimeException() }
+        twitterBotService.twitterStatusService = Mock(TwitterStatusService) { allStatusesTweeted() >> true; resetAllTwitterStatuses() >> { throw new RuntimeException() }}
 
         when:
         twitterBotService.startDowntimePeriodIfAllStatusesTweeted()

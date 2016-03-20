@@ -21,21 +21,18 @@ class TwitterBot {
     @Autowired
     MessageSource messageSource
 
-    @Scheduled(cron = '0/15 * * * * *')
+    @Scheduled(cron = '0 0 21 * * *')
     void tweet() {
 
         if (configService.isDowntimePeriod()) {
 
             def remaining = configService.downtimePeriodTimeRemaining
 
-            log.info "The downtime period is active (time remaining: ${remaining.weeks}w ${remaining.days}d ${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s)"
+            log.info "Not sending next tweet because the downtime period is active (time remaining: ${remaining.weeks}w ${remaining.days}d ${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s)"
         }
         else {
 
             twitterBotService.tweetNextStatus()
-
-            log.info 'Sucessfully tweeted next status'
-
             twitterBotService.startDowntimePeriodIfAllStatusesTweeted()
         }
     }
