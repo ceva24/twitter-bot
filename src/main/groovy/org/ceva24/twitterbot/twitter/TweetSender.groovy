@@ -21,7 +21,7 @@ class TweetSender {
     @Autowired
     MessageSource messageSource
 
-    @Scheduled(cron = '0 0 21 * * *')
+    @Scheduled(cron = '0/15 * * * * *')
     void tweet() {
 
         if (downtimePeriodService.isDowntimePeriod()) {
@@ -35,6 +35,13 @@ class TweetSender {
             def tweet = twitterBotService.tweet()
 
             log.info "Sent tweet: ${tweet}"
+
+            if (twitterBotService.allTwitterStatusesTweeted()) {
+
+                downtimePeriodService.startDowntimePeriod()
+
+                log.info 'Activated downtime mode'
+            }
         }
     }
 }

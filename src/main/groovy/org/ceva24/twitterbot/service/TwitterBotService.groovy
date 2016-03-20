@@ -1,15 +1,11 @@
 package org.ceva24.twitterbot.service
 
-import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.repository.ConfigRepository
 import org.ceva24.twitterbot.repository.TwitterStatusRepository
-import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-import javax.persistence.EntityManager
 
 @Service
 class TwitterBotService {
@@ -23,19 +19,18 @@ class TwitterBotService {
     @Autowired
     TweetService tweetService
 
-    @Autowired
-    EntityManager entityManager
-
     @Transactional
-    def tweet() {
+    def tweet() { // TODO move to tweetservice.sendNextTweet, change this to a twitterstatusservice
 
         def status = twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc()
 
-        activateDowntimeModeIfComplete()
+        if (!status) return
 
-        updateStatusTweetedOn status
+        def tweet = tweetService.sendTweet status.text
 
-        return tweetService.sendTweet(status.text)
+        status.tweetedOn = tweet.tweetedOn
+
+        return status
     }
 
     def getLastTweet() {
@@ -43,22 +38,8 @@ class TwitterBotService {
         return twitterStatusRepository.findFirstByTweetedOnIsNotNullOrderByTweetedOnDesc() ?: new TwitterStatus()
     }
 
-    protected def activateDowntimeModeIfComplete() {
+    def allTwitterStatusesTweeted() {
 
-        if (twitterStatusRepository.countByTweetedOnIsNull() > 1) return
-
-        twitterStatusRepository.resetAll()
-
-        def downtime = configRepository.findOne Config.ConfigId.DOWNTIME
-        downtime.activeOn = new DateTime()
-    }
-
-    protected def updateStatusTweetedOn(TwitterStatus status) {
-
-        status.tweetedOn = DateTime.now()
-
-        twitterStatusRepository.save status
-
-        entityManager.detach status
+        return (twitterStatusRepository.countByTweetedOnIsNull() <= 0L)
     }
 }

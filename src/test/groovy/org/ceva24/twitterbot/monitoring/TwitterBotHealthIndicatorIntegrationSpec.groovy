@@ -12,6 +12,7 @@ import org.joda.time.DateTimeUtils
 import org.joda.time.DateTimeZone
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.actuate.health.Status
 import org.springframework.boot.test.SpringApplicationContextLoader
 import org.springframework.boot.test.TestRestTemplate
 import org.springframework.boot.test.WebIntegrationTest
@@ -22,12 +23,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.web.client.RestTemplate
-import spock.lang.Unroll
+import spock.lang.Specification
 
 @ActiveProfiles('test')
 @WebIntegrationTest(randomPort = true)
 @ContextConfiguration(loader = SpringApplicationContextLoader, classes = Application)
-class TwitterBotHealthIndicatorIntegrationSpec {
+class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
 
     @Value('${local.server.port}')
     int port
@@ -81,7 +82,7 @@ class TwitterBotHealthIndicatorIntegrationSpec {
         response.body.status == HttpStatus.UNAUTHORIZED.value()
     }
 
-    def 'the last tweet status is null when no tweets have been sent'() {
+    def 'the health indicator shows the last tweet as null when no tweets have been sent'() {
 
         setup:
         twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
@@ -90,49 +91,40 @@ class TwitterBotHealthIndicatorIntegrationSpec {
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.OK
-
-        and:
         !response.body.twitterBot.lastTweet.id
     }
 
-    def 'the last tweet status shows the last tweet that was sent'() {
+    def 'the health indicator shows the last tweet that was sent'() {
 
         setup:
         DateTimeUtils.currentMillisFixed = 100000
 
         and:
-        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1)
+        twitterStatusRepository.save([new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1), new TwitterStatus(id: 2, text: 'test 2', sequenceNo: 2)])
 
         when:
         tweetSender.tweet()
 
         and:
-        def response = restTemplate.exchange "http://localhost:${port}/helath", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.OK
-
-        and:
         response.body.twitterBot.lastTweet.tweetedOn == new DateTime(100000, DateTimeZone.UTC).toString()
         response.body.twitterBot.lastTweet.id == 1
         response.body.twitterBot.lastTweet.text == 'test 1'
     }
 
-    def 'the status correctly shows when the downtime period is inactive'() {
+    def 'the health indicator shows when the downtime period is inactive'() {
 
         when:
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.OK
-
-        and:
-        !response.body.twitterBot.downtime.active
-        response.body.twitterBot.downtime.remaining == 0
+        !response.body.twitterBot.isDowntimePeriodActive
+        response.body.twitterBot.downtimePeriodRemaining == 0
     }
 
-    def 'the status shows when the downtime period is active'() {
+    def 'the  health indicator shows when the downtime period is active'() {
 
         setup:
         DateTimeUtils.currentMillisFixed = 100000
@@ -144,31 +136,89 @@ class TwitterBotHealthIndicatorIntegrationSpec {
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.OK
-
-        and:
-        response.body.twitterBot.downtime.active
-        response.body.twitterBot.downtime.remaining == downtimePeriod
+        response.body.twitterBot.isDowntimePeriodActive
+        response.body.twitterBot.downtimePeriodRemaining == downtimePeriod
     }
 
-    @Unroll
-    def 'an authenticated request using http #method returns http method not allowed'() {
+    def 'when the service is tweeting as normal the health indicator shows up'() {
+
+        setup:
+        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now())
 
         when:
-        def response = restTemplate.exchange  "http://localhost:${port}/twitterBot", method, new HttpEntity<String>(authenticationHeader), Map
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.statusCode == HttpStatus.METHOD_NOT_ALLOWED
+        response.body.status == Status.UP.code
+    }
+
+    def 'when the service has stopped tweeting for too long the health indicator shows down'() {
+
+        setup:
+        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(2))
+
+        when:
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+
+        then:
+        response.body.status == Status.DOWN.code
+    }
+
+    def 'when the downtime period is active the health indicator shows out of service'() {
+
+        setup:
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now())
+
+        when:
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+
+        then:
+        response.body.status == Status.OUT_OF_SERVICE.code
+    }
+
+    def 'when the downtime period has only just ended the health indicator still shows up'() {
+
+        setup:
+        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(2))
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME, activeOn: DateTime.now().minusSeconds(downtimePeriod).minusHours(23))
+
+        when:
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+
+        then:
+        response.body.status == Status.UP.code
+    }
+
+    def 'if there are no twitter statuses in the database, the health indicator shows down'() {
+
+        setup:
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+
+        when:
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+
+        then:
+        response.body.status == Status.DOWN.code
+    }
+
+    def 'when the last status is tweeted and the downtime period begins, the last tweet in the health indicator becomes null'() {
+
+        setup:
+        twitterStatusRepository.save new TwitterStatus(id: 1, sequenceNo: 1, text: 'test', tweetedOn: DateTime.now())
+
+        when:
+        def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
+
+        then:
+        response.body.twitterBot.lastTweet.id == 1
+
+        when:
+        tweetSender.tweet()
 
         and:
-        response.body.status == HttpStatus.METHOD_NOT_ALLOWED.value()
-        response.body.error == HttpStatus.METHOD_NOT_ALLOWED.reasonPhrase
-        !response.body.exception
+        response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
-        where:
-        method            | _
-        HttpMethod.POST   | _
-        HttpMethod.PUT    | _
-        HttpMethod.DELETE | _
+        then:
+        !response.body.twitterBot.lastTweet.id
     }
 }

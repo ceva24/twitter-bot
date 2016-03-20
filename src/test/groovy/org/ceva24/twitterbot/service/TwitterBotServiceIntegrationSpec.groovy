@@ -1,9 +1,7 @@
 package org.ceva24.twitterbot.service
 
 import org.ceva24.twitterbot.Application
-import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.repository.ConfigRepository
 import org.ceva24.twitterbot.repository.TwitterStatusRepository
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -24,48 +22,12 @@ class TwitterBotServiceIntegrationSpec extends Specification {
     TwitterBotService twitterBotService
 
     @Autowired
-    ConfigRepository configRepository
-
-    @Autowired
     TwitterStatusRepository twitterStatusRepository
 
-    def 'all tweets have their tweeted on values reset when the downtime period is activated'() {
-
-        setup:
-        twitterStatusRepository.save([new TwitterStatus(id: 1, tweetedOn: DateTime.now()), new TwitterStatus(id: 2, text: 'test')])
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
-
-        when:
-        twitterBotService.tweet()
-
-        then:
-        twitterStatusRepository.countByTweetedOnIsNull() == 2L
-    }
-
-    def 'an exception thrown when activating the downtime period performs a rollback on twitter status'() {
+    def "an exception thrown when sending a tweet does not update the twitter status' tweeted on value"() {
 
         setup:
         twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
-
-        and:
-        twitterBotService.configRepository = Mock ConfigRepository
-        twitterBotService.configRepository.findOne(_) >> { throw new RuntimeException() }
-
-        when:
-        twitterBotService.tweet()
-
-        then:
-        thrown RuntimeException
-
-        and:
-        !twitterStatusRepository.findOne(1L).tweetedOn
-    }
-
-    def 'an exception thrown when sending a tweet performs a rollback on twitter status and config'() {
-
-        setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test1', sequenceNo: 1)
-        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
 
         and:
         twitterBotService.tweetService = Mock TweetService
@@ -79,16 +41,6 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         and:
         !twitterStatusRepository.findOne(1L).tweetedOn
-        !configRepository.findOne(Config.ConfigId.DOWNTIME).activeOn
-    }
-
-    def 'an exception is thrown when the next status to tweet is not found'() {
-
-        when:
-        twitterBotService.tweet()
-
-        then:
-        thrown Exception
     }
 
     def 'getting the last tweet gets the most recent tweet from the database'() {
@@ -98,5 +50,20 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         expect:
         twitterBotService.lastTweet.id == 1L
+    }
+
+    def 'all twitter statuses tweeted is true when there are no statuses left to tweet in the database'() {
+
+        expect:
+        twitterBotService.allTwitterStatusesTweeted()
+    }
+
+    def 'all twitter statuses tweeted is false when there are statuses left to tweet in the database'() {
+
+        setup:
+        twitterStatusRepository.save new TwitterStatus(id: 1)
+
+        expect:
+        !twitterBotService.allTwitterStatusesTweeted()
     }
 }

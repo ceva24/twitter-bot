@@ -41,7 +41,7 @@ class TwitterBotHealthIndicator implements HealthIndicator {
             return health.up().build()
 
         // If the last tweet was sent so long ago that another one should have been sent since
-        if (twitterBotService.lastTweet?.tweetedOn?.plusDays(1)?.beforeNow)
+        if (!(twitterBotService.lastTweet?.tweetedOn?.plusDays(1)?.afterNow))
             return health.down().build()
 
         return health.up().build()

@@ -9,8 +9,6 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
 import spock.lang.Specification
 
-import javax.persistence.EntityManager
-
 class TwitterBotServiceSpec extends Specification {
 
     TwitterBotService twitterBotService
@@ -18,7 +16,7 @@ class TwitterBotServiceSpec extends Specification {
     def setup() {
 
         twitterBotService = new TwitterBotService(twitterStatusRepository: Mock(TwitterStatusRepository), configRepository: Mock(ConfigRepository),
-                tweetService: Mock(TweetService), entityManager: Mock(EntityManager))
+                tweetService: Mock(TweetService))
 
         twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc() >> new TwitterStatus(id: 1)
     }
@@ -40,55 +38,17 @@ class TwitterBotServiceSpec extends Specification {
         then:
         1 * twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc() >> status
         1 * twitterBotService.tweetService.sendTweet('test') >> Mock(Tweet) { getTweetedOn() >> new DateTime(100000) }
-        1 * status.setTweetedOn(new DateTime(100000))
-        1 * twitterBotService.twitterStatusRepository.save(status)
+        1 * status.setProperty('tweetedOn', new DateTime(100000))
     }
 
-    def 'the downtime period is not activated when there are statuses to be sent after the current one'() {
-
-        setup:
-        twitterBotService.tweetService.sendTweet(_) >> Mock(Tweet)
-
-        when:
-        twitterBotService.tweet()
-
-        then:
-        1 * twitterBotService.twitterStatusRepository.countByTweetedOnIsNull() >> 2
-        0 * twitterBotService.twitterStatusRepository.resetAll()
-        0 * twitterBotService.configRepository.findOne(_)
-    }
-
-    def 'the downtime period is activated when tweeting the last status update'() {
-
-        setup:
-        twitterBotService.tweetService.sendTweet(_) >> Mock(Tweet)
-
-        and:
-        DateTimeUtils.currentMillisFixed = 100000
-
-        and:
-        def config = Mock Config
-
-        when:
-        twitterBotService.tweet()
-
-        then:
-        1 * twitterBotService.twitterStatusRepository.countByTweetedOnIsNull() >> 1
-        1 * twitterBotService.twitterStatusRepository.resetAll()
-        1 * twitterBotService.configRepository.findOne(Config.ConfigId.DOWNTIME) >> config
-        1 * config.setProperty('activeOn', new DateTime(100000))
-    }
-
-    def 'an exception is thrown if the next status is not found'() {
+    def 'no tweet is sent if the next status is not found'() {
 
         when:
         twitterBotService.tweet()
 
         then:
         1 * twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc() >> null
-
-        and:
-        thrown NullPointerException
+        0 * twitterBotService.tweetService.sendTweet(_)
     }
 
     def "an exception thrown when attempting to update a twitter status' tweeted on value is propagated"() {
@@ -100,19 +60,43 @@ class TwitterBotServiceSpec extends Specification {
         twitterBotService.tweet()
 
         then:
-        twitterBotService.twitterStatusRepository.countByTweetedOnIsNull() >> { throw exception }
+        twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc() >> { throw exception }
 
         and:
         def e = thrown Exception
         e == exception
     }
 
-    def 'getting the last tweet searches the repository'() {
+    def 'getting the last tweet searches the repository and returns the last status'() {
+
+        given:
+        def status = new TwitterStatus()
 
         when:
-        twitterBotService.lastTweet
+        def last = twitterBotService.lastTweet
 
         then:
-        1 * twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNotNullOrderByTweetedOnDesc()
+        1 * twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNotNullOrderByTweetedOnDesc() >> status
+
+        and:
+        last == status
+    }
+
+    def 'all twitter statuses tweeted is true when the repository count of untweeted statuses is 0'() {
+
+        given:
+        twitterBotService.twitterStatusRepository.countByTweetedOnIsNull() >> 0L
+
+        expect:
+        twitterBotService.allTwitterStatusesTweeted()
+    }
+
+    def 'all twitter statuses tweeted is true when the repository count of untweeted statuses is greater than 0'() {
+
+        given:
+        twitterBotService.twitterStatusRepository.countByTweetedOnIsNull() >> 1L
+
+        expect:
+        !twitterBotService.allTwitterStatusesTweeted()
     }
 }

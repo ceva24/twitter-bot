@@ -81,4 +81,41 @@ class DowntimePeriodServiceSpec extends Specification {
         expect:
         downtimePeriodService.downtimePeriodTimeRemaining == new Period(0).normalizedStandard(PeriodType.yearWeekDayTime())
     }
+
+    def 'starting the downtime period updates the date on the downtime config'() {
+
+        setup:
+        DateTimeUtils.currentMillisFixed = 10000
+
+        and:
+        def config = Mock Config
+        downtimePeriodService.configRepository.findOne(_) >> config
+
+        when:
+        downtimePeriodService.startDowntimePeriod()
+
+        then:
+        1 * config.setProperty('activeOn', new DateTime(10000))
+    }
+
+    def 'starting the downtime period reset all twitter statuses'() {
+
+        setup:
+        downtimePeriodService.configRepository.findOne(_) >> Mock(Config)
+
+        when:
+        downtimePeriodService.startDowntimePeriod()
+
+        then:
+        1 * downtimePeriodService.twitterStatusRepository.resetAll()
+    }
+
+    def 'attempting to start the downtime period when there is no config in the database does nothing'() {
+
+        when:
+        downtimePeriodService.startDowntimePeriod()
+
+        then:
+        0 * downtimePeriodService.twitterStatusRepository.resetAll()
+    }
 }

@@ -40,4 +40,30 @@ class TweetSenderSpec extends Specification {
         then:
         0 * tweetSender.twitterBotService.tweet()
     }
+
+    def 'the downtime period is not activated when there are statuses to be sent after the current one'() {
+
+        setup:
+        tweetSender.downtimePeriodService.isDowntimePeriod() >> false
+        tweetSender.twitterBotService.allTwitterStatusesTweeted() >> false
+
+        when:
+        tweetSender.tweet()
+
+        then:
+        0 * tweetSender.downtimePeriodService.startDowntimePeriod()
+    }
+
+    def 'the downtime period is activated when tweeting the last status update'() {
+
+        setup:
+        tweetSender.downtimePeriodService.isDowntimePeriod() >> false
+        tweetSender.twitterBotService.allTwitterStatusesTweeted() >> true
+
+        when:
+        tweetSender.tweet()
+
+        then:
+        1 * tweetSender.downtimePeriodService.startDowntimePeriod()
+    }
 }
