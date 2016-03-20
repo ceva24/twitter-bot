@@ -9,6 +9,8 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
 import spock.lang.Specification
 
+import javax.persistence.EntityManager
+
 class TwitterBotServiceSpec extends Specification {
 
     TwitterBotService twitterBotService
@@ -16,7 +18,7 @@ class TwitterBotServiceSpec extends Specification {
     def setup() {
 
         twitterBotService = new TwitterBotService(twitterStatusRepository: Mock(TwitterStatusRepository), configRepository: Mock(ConfigRepository),
-                tweetService: Mock(TweetService))
+                tweetService: Mock(TweetService), entityManager: Mock(EntityManager))
 
         twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc() >> new TwitterStatus(id: 1)
     }
