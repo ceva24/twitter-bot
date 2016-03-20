@@ -14,8 +14,6 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.transaction.annotation.Transactional
 import spock.lang.Specification
 
-import javax.persistence.EntityManager
-
 @ActiveProfiles('test')
 @IntegrationTest
 @Transactional
@@ -31,9 +29,6 @@ class TwitterBotServiceIntegrationSpec extends Specification {
     @Autowired
     TwitterStatusRepository twitterStatusRepository
 
-    @Autowired
-    EntityManager entityManager
-
     def 'all tweets have their tweeted on values reset when the downtime period is activated'() {
 
         setup:
@@ -42,9 +37,6 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
         when:
         twitterBotService.tweet()
-
-        and:
-        entityManager.clear()
 
         then:
         twitterStatusRepository.countByTweetedOnIsNull() == 2L

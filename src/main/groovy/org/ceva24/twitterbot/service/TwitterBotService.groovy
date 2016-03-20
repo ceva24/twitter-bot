@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+import javax.persistence.EntityManager
+
 @Service
 class TwitterBotService {
 
@@ -20,6 +22,9 @@ class TwitterBotService {
 
     @Autowired
     TweetService tweetService
+
+    @Autowired
+    EntityManager entityManager
 
     @Transactional
     def tweet() {
@@ -51,6 +56,9 @@ class TwitterBotService {
     protected def updateStatusTweetedOn(TwitterStatus status) {
 
         status.tweetedOn = DateTime.now()
+
         twitterStatusRepository.save status
+
+        entityManager.detach status
     }
 }
