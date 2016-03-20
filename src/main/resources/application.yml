@@ -14,7 +14,8 @@ security.basic.realm: Twitter Bot
 
 spring:
   profiles: development
-  datasource.url: jdbc:h2:mem:testdb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+  datasource:
+    url: jdbc:h2:mem:testdb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
   jpa:
     hibernate.ddl-auto: create-drop
     show-sql: true

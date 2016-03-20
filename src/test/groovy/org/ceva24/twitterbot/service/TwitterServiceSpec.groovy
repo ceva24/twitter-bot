@@ -1,36 +1,26 @@
 package org.ceva24.twitterbot.service
 
-import org.joda.time.DateTime
 import org.springframework.social.DuplicateStatusException
 import org.springframework.social.twitter.api.TimelineOperations
-import org.springframework.social.twitter.api.Tweet
 import org.springframework.social.twitter.api.Twitter
 import spock.lang.Specification
 
-class TweetServiceSpec extends Specification {
+class TwitterServiceSpec extends Specification {
 
-    TweetService tweetService
+    TwitterService tweetService
 
     def setup() {
 
-        tweetService = new TweetService(twitter: Mock(Twitter) { timelineOperations() >> Mock(TimelineOperations) })
+        tweetService = new TwitterService(twitter: Mock(Twitter) { timelineOperations() >> Mock(TimelineOperations) })
     }
 
-    def "a result is returned containing the tweet's details when a tweet is successful"() {
-
-        setup:
-        def now = new Date()
-
-        and:
-        tweetService.twitter.timelineOperations().updateStatus(_) >> new Tweet(1, 'test', now, null, null, null, 1, null, null)
+    def "tweeting a status sends the status update"() {
 
         when:
-        def result = tweetService.sendTweet 'test'
+        tweetService.sendTweet 'test'
 
         then:
-        result.id == 1L
-        result.text == 'test'
-        result.tweetedOn == new DateTime(now)
+        1 * tweetService.twitter.timelineOperations().updateStatus('test')
     }
 
     def 'an exception is propagated when the tweet is unsuccessful'() {

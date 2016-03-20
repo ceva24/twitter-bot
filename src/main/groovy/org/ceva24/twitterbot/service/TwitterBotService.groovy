@@ -1,8 +1,6 @@
 package org.ceva24.twitterbot.service
 
-import org.ceva24.twitterbot.domain.TwitterStatus
-import org.ceva24.twitterbot.repository.ConfigRepository
-import org.ceva24.twitterbot.repository.TwitterStatusRepository
+import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,35 +9,39 @@ import org.springframework.transaction.annotation.Transactional
 class TwitterBotService {
 
     @Autowired
-    TwitterStatusRepository twitterStatusRepository
+    TwitterStatusService twitterStatusService
 
     @Autowired
-    ConfigRepository configRepository
+    ConfigService configService
 
     @Autowired
-    TweetService tweetService
+    TwitterService tweetService
+
+    // TODO manually test/handle rollbacks + integration test
 
     @Transactional
-    def tweet() { // TODO move to tweetservice.sendNextTweet, change this to a twitterstatusservice
+    def tweetNextStatus() {
 
-        def status = twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc()
+        def status = twitterStatusService.nextTweet
 
         if (!status) return
 
-        def tweet = tweetService.sendTweet status.text
+        status.tweetedOn = DateTime.now()
 
-        status.tweetedOn = tweet.tweetedOn
-
-        return status
+        tweetService.sendTweet status.text
     }
 
-    def getLastTweet() {
+    @Transactional
+    def startDowntimePeriodIfAllStatusesTweeted() {
 
-        return twitterStatusRepository.findFirstByTweetedOnIsNotNullOrderByTweetedOnDesc() ?: new TwitterStatus()
-    }
+        if (!twitterStatusService.allStatusesTweeted()) return
 
-    def allTwitterStatusesTweeted() {
+        def downtime = configService.downtimeConfig
 
-        return (twitterStatusRepository.countByTweetedOnIsNull() <= 0L)
+        if (!downtime) return
+
+        downtime.activeOn = new DateTime()
+
+        twitterStatusService.resetAllTwitterStatuses()
     }
 }

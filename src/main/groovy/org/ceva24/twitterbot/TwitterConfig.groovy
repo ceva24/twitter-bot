@@ -1,7 +1,7 @@
 package org.ceva24.twitterbot
 
-import org.ceva24.twitterbot.service.StubTweetService
-import org.ceva24.twitterbot.service.TweetService
+import org.ceva24.twitterbot.service.StubTwitterService
+import org.ceva24.twitterbot.service.TwitterService
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -26,8 +26,8 @@ class TwitterConfig {
 
     @Profile(['development', 'test'])
     @Bean
-    TweetService tweetService() {
+    TwitterService tweetService() {
 
-        return new StubTweetService()
+        return new StubTwitterService()
     }
 }

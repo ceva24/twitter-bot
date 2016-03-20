@@ -6,7 +6,7 @@ import org.ceva24.twitterbot.domain.Config
 import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.repository.ConfigRepository
 import org.ceva24.twitterbot.repository.TwitterStatusRepository
-import org.ceva24.twitterbot.twitter.TweetSender
+import org.ceva24.twitterbot.TwitterBot
 import org.joda.time.DateTime
 import org.joda.time.DateTimeUtils
 import org.joda.time.DateTimeZone
@@ -43,13 +43,13 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
     Integer downtimePeriod
 
     @Autowired
-    TweetSender tweetSender
-
-    @Autowired
     TwitterStatusRepository twitterStatusRepository
 
     @Autowired
     ConfigRepository configRepository
+
+    @Autowired
+    TwitterBot tweetSender
 
     RestTemplate restTemplate
     HttpHeaders authenticationHeader
