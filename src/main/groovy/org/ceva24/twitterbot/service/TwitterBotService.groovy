@@ -1,6 +1,7 @@
 package org.ceva24.twitterbot.service
 
 import org.ceva24.twitterbot.domain.Config
+import org.ceva24.twitterbot.domain.TwitterStatus
 import org.ceva24.twitterbot.repository.ConfigRepository
 import org.ceva24.twitterbot.repository.TwitterStatusRepository
 import org.joda.time.DateTime
@@ -27,16 +28,14 @@ class TwitterBotService {
 
         activateDowntimeModeIfComplete()
 
-        def tweet = tweetService.sendTweet status.text
+        updateStatusTweetedOn status
 
-        status.tweetedOn = tweet.tweetedOn
-
-        return tweet
+        return tweetService.sendTweet(status.text)
     }
 
     def getLastTweet() {
 
-        return twitterStatusRepository.findFirstByTweetedOnIsNotNullOrderByTweetedOnDesc()
+        return twitterStatusRepository.findFirstByTweetedOnIsNotNullOrderByTweetedOnDesc() ?: new TwitterStatus()
     }
 
     protected def activateDowntimeModeIfComplete() {
@@ -47,5 +46,11 @@ class TwitterBotService {
 
         def downtime = configRepository.findOne Config.ConfigId.DOWNTIME
         downtime.activeOn = new DateTime()
+    }
+
+    protected def updateStatusTweetedOn(TwitterStatus status) {
+
+        status.tweetedOn = DateTime.now()
+        twitterStatusRepository.save status
     }
 }

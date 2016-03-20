@@ -38,7 +38,8 @@ class TwitterBotServiceSpec extends Specification {
         then:
         1 * twitterBotService.twitterStatusRepository.findFirstByTweetedOnIsNullOrderBySequenceNoAsc() >> status
         1 * twitterBotService.tweetService.sendTweet('test') >> Mock(Tweet) { getTweetedOn() >> new DateTime(100000) }
-        1 * status.setProperty('tweetedOn', new DateTime(100000))
+        1 * status.setTweetedOn(new DateTime(100000))
+        1 * twitterBotService.twitterStatusRepository.save(status)
     }
 
     def 'the downtime period is not activated when there are statuses to be sent after the current one'() {

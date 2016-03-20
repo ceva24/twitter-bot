@@ -28,8 +28,8 @@ class TwitterStatusRepositoryIntegrationSpec extends Specification {
     def "resetting all sets all the twitter statuses' tweeted on date to null"() {
 
         setup:
-        twitterStatusRepository.save new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1, tweetedOn: new DateTime())
-        twitterStatusRepository.save new TwitterStatus(id: 2, text: 'test 2', sequenceNo: 2, tweetedOn: new DateTime())
+        twitterStatusRepository.save([new TwitterStatus(id: 1, text: 'test 1', sequenceNo: 1, tweetedOn: new DateTime()),
+                                      new TwitterStatus(id: 2, text: 'test 2', sequenceNo: 2, tweetedOn: new DateTime())])
 
         when:
         twitterStatusRepository.resetAll()

@@ -14,6 +14,8 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.transaction.annotation.Transactional
 import spock.lang.Specification
 
+import javax.persistence.EntityManager
+
 @ActiveProfiles('test')
 @IntegrationTest
 @Transactional
@@ -28,6 +30,25 @@ class TwitterBotServiceIntegrationSpec extends Specification {
 
     @Autowired
     TwitterStatusRepository twitterStatusRepository
+
+    @Autowired
+    EntityManager entityManager
+
+    def 'all tweets have their tweeted on values reset when the downtime period is activated'() {
+
+        setup:
+        twitterStatusRepository.save([new TwitterStatus(id: 1, tweetedOn: DateTime.now()), new TwitterStatus(id: 2, text: 'test')])
+        configRepository.save new Config(id: Config.ConfigId.DOWNTIME)
+
+        when:
+        twitterBotService.tweet()
+
+        and:
+        entityManager.clear()
+
+        then:
+        twitterStatusRepository.countByTweetedOnIsNull() == 2L
+    }
 
     def 'an exception thrown when activating the downtime period performs a rollback on twitter status'() {
 
@@ -81,10 +102,9 @@ class TwitterBotServiceIntegrationSpec extends Specification {
     def 'getting the last tweet gets the most recent tweet from the database'() {
 
         setup:
-        def status = twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now())
-        twitterStatusRepository.save new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(1))
+        twitterStatusRepository.save([new TwitterStatus(id: 1, tweetedOn: DateTime.now()), new TwitterStatus(id: 1, tweetedOn: DateTime.now().minusDays(1))])
 
         expect:
-        twitterBotService.lastTweet == status
+        twitterBotService.lastTweet.id == 1L
     }
 }
