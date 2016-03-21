@@ -189,7 +189,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         response.body.status == Status.UP.code
     }
 
-    def 'if there are no tweets in the database, the health indicator shows down'() {
+    def 'if there are no tweets in the database, the health indicator shows up'() {
 
         setup:
         applicationStatusRepository.save new ApplicationStatus(id: ApplicationStatus.ApplicationStatusId.DOWNTIME)
@@ -198,7 +198,7 @@ class TwitterBotHealthIndicatorIntegrationSpec extends Specification {
         def response = restTemplate.exchange "http://localhost:${port}/health", HttpMethod.GET, new HttpEntity<String>(authenticationHeader), Map
 
         then:
-        response.body.status == Status.DOWN.code
+        response.body.status == Status.UP.code
     }
 
     def 'when the final tweet is sent and the downtime period begins, the last tweet in the health indicator becomes null'() {
