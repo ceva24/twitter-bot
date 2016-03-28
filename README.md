@@ -1,4 +1,4 @@
-# twitter-bot
+# Twitter Bot
 
 ## Introduction
 
