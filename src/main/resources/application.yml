@@ -25,7 +25,9 @@ security.user:
   password: pass
 
 org.ceva24.twitter-bot:
-  tweet.downtime-period.seconds: 30
+  tweet:
+    period.cron: '*/10 * * * * *'
+    downtime-period.seconds: 30
   twitter:
     consumer-key:
     consumer-secret:
@@ -60,4 +62,6 @@ spring:
 
 security.require-ssl: true
 
-org.ceva24.twitter-bot.tweet.downtime-period.seconds: 2419200 # 1 month
+org.ceva24.twitter-bot.tweet:
+  period.cron: 0 0 17 * * *
+  downtime-period.seconds: 2419200 # 1 month

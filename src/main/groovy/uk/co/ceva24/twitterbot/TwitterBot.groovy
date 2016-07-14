@@ -21,7 +21,7 @@ class TwitterBot {
     @Autowired
     MessageSource messageSource
 
-    @Scheduled(cron = '0 0 17 * * *')
+    @Scheduled(cron = '${org.ceva24.twitter-bot.tweet.period.cron}')
     void tweet() {
 
         if (applicationStatusService.isDowntimePeriod()) {
