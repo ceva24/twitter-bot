@@ -50,8 +50,8 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-social-twitter'
 
     compile 'joda-time:joda-time:2.9.4'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.7.2'
-    compile 'org.jadira.usertype:usertype.extended:4.0.0.GA'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.7.5'
+    compile 'org.jadira.usertype:usertype.jodatime:2.0.1'
 
     runtime 'com.h2database:h2'
     runtime 'mysql:mysql-connector-java:5.1.39'

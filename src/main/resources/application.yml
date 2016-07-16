@@ -1,6 +1,6 @@
-spring:
-  profiles.active: development
-  jpa.properties.jadira.usertype.autoRegisterUserTypes: true
+---
+
+spring.profiles.active: development
 
 info.application:
   name: ${name}
